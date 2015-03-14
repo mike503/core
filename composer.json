@@ -1,6 +1,6 @@
 {
-    "name": "mike503/test",
-    "description": "Procedural framework for PHP",
+    "name": "mike503/core",
+    "description": "Procedural library and pseudo-framework for PHP",
     "homepage": "https://github.com/mike503/core",
     "type": "library",
     "license": "MIT",
@@ -11,15 +11,8 @@
             "homepage": "https://michaelshadle.com"
         }
     ],
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/mike503/core"
-        }
-    ],
     "require": {
         "php": ">=5.5.0",
-        "mike503/core": "dev-master"
     },
     "autoload": {
         "files": [
