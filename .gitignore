@@ -1,0 +1,11 @@
+# private details
+app/config/config.php
+app/config/routes.cached.php
+
+# third party external sources
+app/modules
+composer.lock
+vendor
+
+# other (possible) stuff
+var

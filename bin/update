@@ -1,0 +1,49 @@
+#!/usr/bin/env php
+<?php
+require dirname(__DIR__) . '/app/core/bootstrap.php';
+
+if ($config['site_theme'] == 'reiapp') {
+  echo 'do not run this directly on reiapp right now, it is the source project.' . PHP_EOL;
+  exit;
+}
+
+$files = array(
+  'app/config/config.default.php',
+  'app/core/bootstrap.php',
+  'app/data/countries.php',
+  'app/data/states.php',
+  'app/libs/cache.php',
+  'app/libs/cache.memcache.php',
+  'app/libs/database.php',
+  'app/libs/formatting.php',
+  'app/libs/notifications.php',
+  'app/libs/properties.php',
+  'app/libs/session.php',
+  'app/libs/theme.php',
+  'app/libs/user.php',
+  'app/libs/utilities.php',
+  'app/libs/validation.php',
+  'bin/tail',
+  'bin/show',
+  'bin/update',
+  'public/index.php',
+);
+
+$dir = sys_get_temp_dir();
+$rand = substr(md5(rand()), 0, 10);
+chdir($dir);
+system('rm -rf framework' . $rand);
+system('git clone -q git@bitbucket.org:mike503/reiapp.git framework' . $rand);
+foreach ($files as $file) {
+  $source = $dir . DIRECTORY_SEPARATOR . 'framework' . $rand . DIRECTORY_SEPARATOR . $file;
+  $dest = $config['project_root'] . DIRECTORY_SEPARATOR . $file;
+// i need to have a version check here. not just hash
+  if (!file_exists($dest) || md5_file($source) != md5_file($dest)) {
+    echo 'Updating ' . $dest . PHP_EOL;
+    if (!is_dir(dirname($dest))) {
+      mkdir(dirname($dest), 0711, TRUE);
+    }
+    copy($source, $dest);
+  }
+}
+system('rm -rf framework' . $rand);

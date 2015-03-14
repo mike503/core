@@ -1,0 +1,26 @@
+{
+    "name": "mike503/core",
+    "minimum-stability": "dev",
+    "description": "Procedural framework for PHP",
+    "homepage": "https://github.com/mike503/core",
+    "type": "library",
+    "license": "BSD",
+    "authors": [
+        {
+            "name": "Michael Shadle",
+            "email": "mike503@gmail.com",
+            "homepage": "https://michaelshadle.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.5.0"
+    },
+    "autoload": {
+        "files": [
+            "src/functions.php"
+        ]
+    },
+    "config": {
+        "bin-dir": "bin"
+    }
+}
