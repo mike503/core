@@ -12,12 +12,19 @@
             "homepage": "https://michaelshadle.com"
         }
     ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/mike503/core"
+        }
+    ],
     "require": {
-        "php": ">=5.5.0"
+        "php": ">=5.5.0",
+        "mike503/core": "dev-master"
     },
     "autoload": {
         "files": [
-            "src/functions.php"
+            "app/libs/database.php"
         ]
     },
     "config": {
