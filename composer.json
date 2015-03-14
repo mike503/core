@@ -1,10 +1,9 @@
 {
-    "name": "mike503/core",
-    "minimum-stability": "dev",
+    "name": "mike503/test",
     "description": "Procedural framework for PHP",
     "homepage": "https://github.com/mike503/core",
     "type": "library",
-    "license": "BSD",
+    "license": "MIT",
     "authors": [
         {
             "name": "Michael Shadle",
@@ -23,7 +22,6 @@
         "mike503/core": "dev-master"
     },
     "autoload": {
-        "psr-0": { "": "app" },
         "files": [
             "app/libs/database.php"
         ]
