@@ -23,6 +23,7 @@
         "mike503/core": "dev-master"
     },
     "autoload": {
+        "psr-0": { "": "app" },
         "files": [
             "app/libs/database.php"
         ]
