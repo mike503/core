@@ -1,6 +1,4 @@
 <?php
-namespace {
-
 function core_db_affected() {
   if (core_db_check()) {
     return mysqli_affected_rows($GLOBALS['db']);
@@ -115,6 +113,4 @@ function core_db_rows_assoc($results) {
     return mysqli_fetch_assoc($results);
   }
   return FALSE;
-}
-
 }
