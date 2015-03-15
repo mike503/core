@@ -28,6 +28,7 @@ Behind the scenes (just for reference, you shouldn't care about them)
 
 # Roadmap
 
+* Stable 4xx and 5xx pages that can execute properly if they are missing or unavailable
 * Form API
   * field types
   * validation hooks

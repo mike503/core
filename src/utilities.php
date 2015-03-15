@@ -274,7 +274,7 @@ function core_bootstrap() {
     global $config;
     $config['project_root'] = dirname(dirname(dirname(dirname(__DIR__))));
     $config['document_root'] = $config['project_root'] . DIRECTORY_SEPARATOR . 'public';
-// this runs into issues on our test environment
+// @TODO this runs into issues on our test environment
     require $config['project_root'] . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php';
 
     set_error_handler('core_error_handler');
@@ -287,6 +287,16 @@ function core_bootstrap() {
         core_request_init();
         core_user_init();
         core_theme_init();
+    }
+
+// @TODO MODULE CONCEPT. TBD. SHOULD BE MORE THAN JUST $modules ARRAY
+    require $config['project_root'] . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'modules.php';
+    foreach ($modules as $module) {
+        core_require_file($config['project_root'] . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . $module . '.php');
+    }
+
+    if (isset($_SERVER['HTTP_HOST'])) {
+// @TODO ROUTE DEFINITION SHOULD BE MORE THAN JUST $routes ARRAY
         core_router_init();
     }
 }
