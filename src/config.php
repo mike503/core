@@ -1,14 +1,12 @@
 <?php
-// configuration.
-require dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php';
+require dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php';
 
 $config['project_root'] = dirname(dirname(__DIR__));
 $config['application_root'] = $config['project_root'] . DIRECTORY_SEPARATOR . 'app';
 $config['web_root'] = $config['project_root'] . DIRECTORY_SEPARATOR . 'public';
 $config['theme_root'] = $config['application_root'] . DIRECTORY_SEPARATOR . 'themes' . DIRECTORY_SEPARATOR . $config['site_theme'];
-
-// get the database configured so that the log functions can write.
-require $config['application_root'] . DIRECTORY_SEPARATOR . 'libs' . DIRECTORY_SEPARATOR . 'database.php';
+print_r($config);
+exit;
 
 function core_config_get($name = '', $fallback = '') {
 // @TODO - heavy caching
@@ -152,18 +150,3 @@ function core_debug($type = '', $message = '') {
     core_log($type, $message, 'debug');
   }
 }
-
-// framework.
-require $config['application_root'] . DIRECTORY_SEPARATOR . 'libs' . DIRECTORY_SEPARATOR . 'cache.php';
-require $config['application_root'] . DIRECTORY_SEPARATOR . 'libs' . DIRECTORY_SEPARATOR . 'formatting.php';
-require $config['application_root'] . DIRECTORY_SEPARATOR . 'libs' . DIRECTORY_SEPARATOR . 'notifications.php';
-require $config['application_root'] . DIRECTORY_SEPARATOR . 'libs' . DIRECTORY_SEPARATOR . 'router.php';
-require $config['application_root'] . DIRECTORY_SEPARATOR . 'libs' . DIRECTORY_SEPARATOR . 'theme.php';
-require $config['application_root'] . DIRECTORY_SEPARATOR . 'libs' . DIRECTORY_SEPARATOR . 'user.php';
-require $config['application_root'] . DIRECTORY_SEPARATOR . 'libs' . DIRECTORY_SEPARATOR . 'utilities.php';
-require $config['application_root'] . DIRECTORY_SEPARATOR . 'libs' . DIRECTORY_SEPARATOR . 'validation.php';
-
-// application specific. this should move to "modules"
-require $config['application_root'] . DIRECTORY_SEPARATOR . 'libs' . DIRECTORY_SEPARATOR . 'properties.php';
-# tenants
-# documents

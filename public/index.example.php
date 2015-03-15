@@ -8,15 +8,10 @@ if (isset($_GET['xhprof']) && !empty($_SERVER['XHPROF_ROOT']) ) {
 require dirname(__DIR__) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
 
 core_session_init();
-
 core_request_init();
-
 core_session_init();
-
 core_user_init();
-
 core_theme_init();
-
 core_router_init();
 
 if (isset($_GET['xhprof']) && !empty($_SERVER['XHPROF_ROOT'])) {
