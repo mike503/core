@@ -27,11 +27,11 @@ Behind the scenes (just for reference, you shouldn't care about them)
 # Roadmap
 
 * Form API
-** field types
-** validation hooks
-** error submission array for easy theming
+  * field types
+  * validation hooks
+  * error submission array for easy theming
 * Messaging framework
-** extensible idea for email, SMS, various "message" types
-** driven by easily editable templates
+  * extensible idea for email, SMS, various "message" types
+  * driven by easily editable templates
 * Switch to PDO or use prepared statements
-** PDO will make different backend options easier, but do we care?
+  * PDO will make different backend options easier, but do we care?
