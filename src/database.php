@@ -16,10 +16,6 @@ function core_db_check() {
     return FALSE;
 }
 
-function core_db_error($message = '', $query = '') {
-    core_log('database', 'error message: "' . $message . '" query: "' . $query . '"', 'error');
-}
-
 function core_db_escape($string = '') {
 // @TODO might have a better function coming soon
     if (core_db_check()) {
@@ -98,7 +94,7 @@ function core_db_paginate($query = '', $current_page = 1, $items_per_page = 15) 
 function core_db_query($query = '') {
     if (core_db_check() && !empty($query)) {
         if (!$results = mysqli_query($GLOBALS['dbh'], $query)) {
-            core_db_error(mysqli_error($GLOBALS['dbh']), $query);
+            core_log('database', mysqli_error($GLOBALS['dbh']) . '" query: "' . $query . '"', 'error');
             return FALSE;
         }
         return $results;

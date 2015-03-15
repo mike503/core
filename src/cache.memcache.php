@@ -25,9 +25,10 @@ function core_cache_flush($bucket = '') {
 
 function core_cache_get($bucket = '', $key = '') {
     global $config;
-    $return = &core_static(__FUNCTION__ . ':' . $bucket . ':' . $key)) {
+    $return = &core_static(__FUNCTION__ . ':' . $bucket . ':' . $key);
     if (!isset($return)) {
         if (core_cache_check()) {
+// @TODO - variable get?
             if ($return = memcache_get($GLOBALS['ch'], $bucket . ':' . $config['memcache_key_prefix'] . ':' . $key)) {
                 core_debug('cache', 'get HIT for bucket: "' . $bucket . '" key: "' . $key . '"');
             } else {

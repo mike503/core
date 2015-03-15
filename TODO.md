@@ -24,9 +24,6 @@ http://php.net/manual/en/mysqli.quickstart.prepared-statements.php
 core_db_query($query = '', [ $params = array() ])
 
 
-how different is my format_escape() or whatever than this?
-htmlspecialchars($data, ENT_QUOTES | ENT_HTML401, 'UTF-8')
-
 
 However, the type is not determined by using heuristics that validate it, but by simply reading the data sent by the HTTP request, which is created by a client. A better, yet not perfect, way of validating file types is to use finfo class.
 $finfo = new finfo(FILEINFO_MIME_TYPE);

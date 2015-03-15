@@ -1,4 +1,9 @@
 <?php
+function core_format_escape($string = '') {
+    // OWASP recommendation.
+    return htmlspecialchars($string, ENT_QUOTES | ENT_HTML401, 'UTF-8');
+}
+
 function core_format_duration($since = 0) {
     $seconds = core_timestamp() - $since;
     if ($seconds < 1) {

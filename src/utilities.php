@@ -1,4 +1,229 @@
 <?php
+function core_backtrace($quick = FALSE) {
+    $backtrace = debug_backtrace();
+    array_shift($backtrace);
+    if ($quick) {
+        return array(
+            'function' => $backtrace[0]['function'],
+            'line' => $backtrace[1]['line'],
+            'file' => $backtrace[1]['file'],
+        );
+    }
+    foreach ($backtrace as $item) {
+        if (in_array($item['function'], array('core_log_commit', 'core_log'))) {
+            continue;
+        }
+        if (isset($item['args'])) {
+            $args = array();
+            foreach ($item['args'] as $arg) {
+                if (is_object($arg)) {
+                    $str = get_class($arg);
+                } elseif (is_array($arg)) {
+                    $str = 'Array';
+                } elseif (is_numeric($arg)) {
+                    $str = $arg;
+                } else {
+                    $str = "'$arg'";
+                }
+                $args[] = $str;
+            }
+            $args = implode(', ', $args);
+        }
+        $return[] = str_replace(core_config_get('project_root') . DIRECTORY_SEPARATOR, '', $item['file']) . ':' . $item['line'] . ' ' . $item['function'] . '(' . (!empty($args) ? $args : '') . ')';;
+    }
+    return $return;
+}
+
+// this function captures both PHP-generated errors and notices, as well as our own core_log() messages.
+function core_log_commit($details = array()) {
+
+    if (!$logging = core_config_get('log', FALSE)) {
+        return FALSE;
+    }
+
+    $details['level'] = core_error_normalize($details['level']);
+    $details['url'] = isset($GLOBALS['request']['url']) ? $GLOBALS['request']['url'] : '';
+    $details['id'] = isset($GLOBALS['request']['id']) ? $GLOBALS['request']['id'] : '';
+    $details['user_id'] = isset($GLOBALS['user']['user_id']) ? $GLOBALS['user']['user_id'] : 0;
+    $details['ip'] = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
+    $details['referrer'] = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] :'';
+
+    if (in_array('display', $logging)) {
+        echo '<fieldset style="border: 1px solid ' . core_error_color($details['level']) . '; padding: 10px; margin-bottom: 10px;">';
+        echo '<legend>' . ucfirst($details['level']) . ' (module: ' . $details['module'] . ')</legend>';
+        echo nl2br(core_format_escape($details['message']));
+        if ($details['level'] != 'debug') {
+            echo '<br /><br />Stack trace:<ol>';
+            $backtrace = core_backtrace();
+            foreach ($backtrace as $item) {
+                echo '<li>' . $item . '</li>';
+            }
+            echo '</ol>';
+        }
+        echo '</fieldset>';
+    }
+
+    if ($details['level'] != 'debug') {
+        $details['message'] .= PHP_EOL . PHP_EOL . 'Stack trace:' . PHP_EOL;
+        $backtrace = core_backtrace();
+        $i = 1;
+        foreach ($backtrace as $item) {
+           $details['message'] .= $i . '. ' . $item . PHP_EOL;
+           $i++;
+        }
+    }
+
+    if (in_array('file', $logging)) {
+        $dir = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'var';
+        if (!is_dir($dir)) {
+// @TODO - figure out a cleaner way without having to "@"
+            @mkdir($dir, 0711, TRUE);
+        }
+        $file = $dir . DIRECTORY_SEPARATOR . 'app.log';
+// only execute this for specific levels
+// @TODO - figure out a cleaner way without having to "@"
+        @file_put_contents($file, print_r($details, TRUE), FILE_APPEND);
+    }
+
+    if (in_array('syslog', $logging)) {
+        openlog('php/core', LOG_ODELAY | LOG_PID, LOG_USER);
+        syslog(core_error_syslog($details['level']), $details['message']);
+    }
+
+    if (in_array('database', $logging)) {
+// need to check the db is available!
+        core_db_query("INSERT INTO core_log (log_timestamp, log_module, log_level, log_file, log_line, log_function, log_request_id, log_url, log_referrer, log_ip, log_user_id, log_message) VALUES (" . core_timestamp() . ", '" . core_db_escape($details['module']). "', '" . core_db_escape($details['level']) . "', '" . core_db_escape($details['file']) . "', '" . intval($details['line']). "', '" . (!empty($details['function']) ? core_db_escape($details['function']) : '') . "', '" . core_db_escape($details['id']) . "', '" . core_db_escape($details['url']) . "', '" . core_db_escape($details['referrer']). "', '" . core_db_escape($details['ip']). "', " . intval($details['user_id']). ", '" . core_db_escape($details['message']). "')");
+    }
+}
+
+// map our levels to syslog. see http://php.net/manual/en/function.syslog.php
+function core_error_syslog($level = '') {
+    if ($return = &core_static(__FUNCTION__ . ':' . $level) && $return !== NULL) {
+      return $return;
+    }
+    switch (core_error_normalize($level)) {
+        case 'fatal':
+            // LOG_ALERT or LOG_EMERG could also be an option
+            $return = LOG_CRIT;
+            break;
+        case 'error':
+            $return = LOG_ERR;
+            break;
+        case 'warning':
+            $return = LOG_WARNING;
+            break;
+        case 'notice':
+            $return = LOG_NOTICE;
+            break;
+        default:
+            $return = LOG_DEBUG;
+            break;
+    }
+    return $return;
+}
+
+function core_error_color($level = '') {
+    if ($return = &core_static(__FUNCTION__ . ':' . $level) && $return !== NULL) {
+      return $return;
+    }
+    switch (core_error_normalize($level)) {
+        case 'fatal':
+            $return = 'red';
+            break;
+        case 'error':
+            $return = 'red';
+            break;
+        case 'warning':
+            $return = 'orange';
+            break;
+        case 'notice':
+            $return = 'orange';
+            break;
+        default:
+            $return = 'black';
+            break;
+    }
+    return $return;
+}
+
+// map PHP constants and other possibles to one of our levels.
+function core_error_normalize($level = '') {
+    if ($return = &core_static(__FUNCTION__ . ':' . $level) && $return !== NULL) {
+      return $return;
+    }
+    switch ($level) {
+        case E_CORE_ERROR:
+        case E_ERROR:
+        case E_PARSE:
+        case 'fatal':
+            $return = 'fatal';
+            break;
+        case E_RECOVERABLE_ERROR:
+        case E_USER_ERROR:
+        case 'error':
+            $return = 'error';
+            break;
+        case E_USER_WARNING:
+        case E_CORE_WARNING:
+        case E_WARNING:
+        case 'warning':
+            $return = 'warning';
+            break;
+        case E_USER_NOTICE:
+        case E_NOTICE:
+        case E_STRICT:
+        case E_DEPRECATED:
+        case E_USER_DEPRECATED:
+        case 'notice':
+            $return = 'notice';
+            break;
+        default:
+            $return = 'debug';
+            break;
+    }
+    return $return;
+}
+
+// to handle PHP errors
+function core_error_handler($level = 0, $message = '', $file = '', $line = 0, $context = array()) {
+    $backtrace = debug_backtrace();
+    $details['timestamp'] = core_timestamp();
+    if ($backtrace[0]['args'][4]['error']) {
+        $details = array(
+            'module' => 'php',
+            'message' => $backtrace[0]['args'][4]['error']['message'],
+            'level' => core_error_normalize($level),
+            'file' => $backtrace[0]['args'][4]['error']['file'],
+            'line' => $backtrace[0]['args'][4]['error']['line'],
+        );
+    } else {
+// @TODO: what to do here?
+echo "core_error_handler given an error that it does not know how to handle yet";
+    }
+    core_log_commit($details);
+}
+
+// our own central logging function.
+function core_log($module = '', $message = '', $level = 'debug') {
+    $backtrace = core_backtrace(TRUE);
+    $details = array(
+        'timestamp' => core_timestamp(),
+        'module' => $module,
+        'message' => $message,
+        'level' => $level,
+        'file' => $backtrace['file'],
+        'function' => $backtrace['function'],
+        'line' => $backtrace['line'],
+    );
+    core_log_commit($details);
+}
+
+function core_debug($module = '', $message = '') {
+    if (core_config_get('superdebug', FALSE) == TRUE) {
+        core_log($module, $message, 'debug');
+    }
+}
+
 // @NOTE - currently does not support attachments.
 // @NOTE - $headers['to'] can accept "Some User <foo@bar.com>" and also multiple recipients.
 // @TODO - additional headers we could look at using: "Reply-To:" "Content-type:" "MIME-Version:"
@@ -110,167 +335,6 @@ function core_timestamp() {
     return time();
 }
 
-// this function captures both PHP-generated errors and notices, as well as our own core_log() messages.
-function core_log_commit($details = array()) {
-
-    if (!$logging = core_config_get('log', FALSE)) {
-        return FALSE;
-    }
-
-    global $config;
-
-    // our tag => syslog mapping. see http://php.net/manual/en/function.syslog.php
-    $message_levels = array(
-        'fatal' => LOG_CRIT, // LOG_ALERT or LOG_EMERG could also be an option
-        'error' => LOG_ERR,
-        'warning' => LOG_WARNING,
-        'notice' => LOG_NOTICE,
-        'info' => LOG_INFO,
-        'debug' => LOG_DEBUG,
-    );
-
-    // normalize the PHP error levels.
-    if ($details['type'] == 'php') {
-        switch ($details['level']) {
-            case E_CORE_ERROR:
-            case E_ERROR:
-                $details['level'] = 'fatal';
-                break;
-            case E_RECOVERABLE_ERROR:
-            case E_USER_ERROR:
-                $details['level'] = 'error';
-                break;
-            case E_USER_WARNING:
-            case E_CORE_WARNING:
-            case E_WARNING:
-                $details['level'] = 'warning';
-                break;
-            case E_USER_NOTICE:
-            case E_NOTICE:
-            case E_STRICT:
-            case E_DEPRECATED:
-            case E_USER_DEPRECATED:
-                $details['level'] = 'notice';
-                break;
-            default:
-                core_log('log', 'unknown message level type from PHP error handler: ' . $details['level'], 'notice');
-                break;
-        }
-    } elseif (!isset($message_levels[$details['level']])) {
-        $details['level'] = 'debug';
-    }
-
-    $details['function'] = isset($details['function']) ? $details['function'] : '';
-    $details['url'] = isset($GLOBALS['request']['url']) ? $GLOBALS['request']['url'] : '';
-    $details['id'] = isset($GLOBALS['request']['id']) ? $GLOBALS['request']['id'] : '';
-    $details['user_id'] = isset($GLOBALS['user']['user_id']) ? $GLOBALS['user']['user_id'] : 0;
-    $details['ip'] = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
-    $details['referrer'] = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] :'';
-
-// @TODO - use "html" instead? or "output" or "console"?
-    if (in_array('display', $logging)) {
-// @TODO - clean this up
-        switch ($details['level']) {
-            case 'fatal':
-                $color = 'red';
-                break;
-            case 'error':
-                $color = 'red';
-                break;
-            case 'warning':
-                $color = 'orange';
-                break;
-            case 'notice':
-                $color = 'orange';
-                break;
-            case 'debug':
-                $color = 'black';
-                break;
-        }
-        echo '<div style="border: 1px solid ' . $color . '; padding: 10px; margin-bottom: 10px;">';
-        echo 'Error:<br />';
-        echo 'level: ' . $details['level'] . '<br />';
-        echo 'type: ' . $details['type'] . '<br />';
-#        echo 'function: ' . $details['function'] . '()<br />';
-#        echo 'file/line: ' . $details['file'] . ':' . $details['line'] . '<br />';
-        echo 'message: ' . $details['message'] . '<br />';
-        echo '</div>';
-    }
-
-    if (in_array('file', $logging)) {
-        $dir = $config['project_root'] . DIRECTORY_SEPARATOR . 'var';
-        if (!is_dir($dir)) {
-// @TODO - figure out a cleaner way without having to "@"
-            @mkdir($dir, 0711, TRUE);
-        }
-        $file = $dir . DIRECTORY_SEPARATOR . 'app.log';
-// @TODO - figure out a cleaner way without having to "@"
-        @file_put_contents($file, print_r($details, TRUE), FILE_APPEND);
-    }
-
-    if (in_array('syslog', $logging)) {
-        openlog('php/core', LOG_ODELAY | LOG_PID, LOG_USER);
-        syslog($message_levels[$details['level']], $details['message']);
-    }
-
-    if (in_array('database', $logging)) {
-// need to check the db is available!
-        core_db_query("INSERT INTO core_log (log_timestamp, log_type, log_level, log_file, log_line, log_function, log_request_id, log_url, log_referrer, log_ip, log_user_id, log_message) VALUES (" . core_timestamp() . ", '" . core_db_escape($details['type']). "', '" . core_db_escape($details['level']) . "', '" . core_db_escape($details['file']) . "', '" . intval($details['line']). "', '" . core_db_escape($details['function']). "', '" . core_db_escape($details['id']) . "', '" . core_db_escape($details['url']) . "', '" . core_db_escape($details['referrer']). "', '" . core_db_escape($details['ip']). "', " . intval($details['user_id']). ", '" . core_db_escape($details['message']). "')");
-    }
-}
-
-// @TODO we're still not getting certain PHP errors.
-function core_error_handler($level = 0, $message = '', $file = '', $line = 0, $context = array()) {
-    $message = $message . PHP_EOL;
-    $message .= 'Stack trace:';
-    foreach (debug_backtrace() as $step) {
-        if (isset($step['file']) && isset($step['line'])) {
-            $message .= PHP_EOL . $step['file'] . ':' . $step['line'];
-        }
-    }
-    $details = array(
-        'timestamp' => core_timestamp(),
-        'type' => 'php',
-        'message' => $message,
-        'level' => $level, // @TODO - not useful, yet
-        'file' => $file,
-        'line' => $line,
-    );
-    core_log_commit($details);
-}
-
-// our own central logging function.
-function core_log($type = '', $message = '', $level = 'debug') {
-    $count = count(debug_backtrace());
-    $function = '(global)';
-    $file = debug_backtrace()[0]['file'];
-    $line = debug_backtrace()[0]['line'];
-    if ($count > 1) {
-        $function = debug_backtrace()[$count - 1]['function'];
-        if ($function == 'require') {
-            $function = '';
-        }
-        $file = debug_backtrace()[$count - 2]['file'];
-        $line = debug_backtrace()[$count - 2]['line'];
-    }
-    $details = array(
-        'timestamp' => core_timestamp(),
-        'type' => $type,
-        'message' => $message,
-        'level' => $level,
-        'file' => $file,
-        'function' => $function,
-        'line' => $line,
-    );
-    core_log_commit($details);
-}
-
-function core_debug($type = '', $message = '') {
-    if (core_config_get('superdebug', FALSE) == TRUE) {
-        core_log($type, $message, 'debug');
-    }
-}
-
 // OWASP recommendations.
 function core_cookie_delete($name = '') {
     // ensure the cookie expires in browser.
@@ -334,11 +398,11 @@ function core_bootstrap() {
 function core_shutdown_function() {
     // allows us to capture fatal errors. as long as they're defined in the shutdown function before it happens.
     if ($error = error_get_last()) {
-        core_error_handler($error['type'], $error['message'], $error['file'], $error['line']);
-        if ($error['type'] === E_ERROR || $error['type'] === E_USER_ERROR) {
+        if ($error['type'] === E_ERROR || $error['type'] === E_USER_ERROR || $error['type'] == E_PARSE) {
+            trigger_error($error['message'], $error['type']);
 // @TODO: throw an official 5xx page?
-             header('HTTP/1.0 500 Server Error');
-             exit;
+            header('HTTP/1.0 500 Server Error');
+            exit;
         }
     }
 }
