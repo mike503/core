@@ -20,3 +20,15 @@ function core_request_init() {
         exit;
     }
 }
+
+function core_request_get($name = '', $fallback = '') {
+    global $request;
+    if (!$value = &core_static(__FUNCTION__ . $name . $fallback)) {
+        if (isset($request[$name])) {
+            $value = $request[$name];
+        } else {
+            $value = $fallback;
+        }
+    }
+    return $value;
+}

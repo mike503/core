@@ -102,15 +102,6 @@ function core_form_highlight($name = '') {
     }
 }
 
-function core_config_get($name = '', $fallback = '') {
-    global $config;
-// @TODO - heavy caching
-    if (isset($config[$name])) {
-        return $config[$name];
-    }
-    return $fallback;
-}
-
 // this might change to be a microtime instead. $_SERVER['REQUEST_TIME_FLOAT'] or surgery on PHP's microtime()
 function core_timestamp() {
     if (isset($_SERVER['REQUEST_TIME'])) {
@@ -275,4 +266,23 @@ function core_cookie_delete($name = '') {
     setcookie($name, FALSE);
     // removes the cookie from the current script execution.
     unset($_COOKIE[$name]);
+}
+
+function core_require_file($file = '') {
+    if (!file_exists($file)) {
+        return FALSE;
+    }
+    require $file;
+}
+
+function core_config_get($name = '', $fallback = '') {
+    global $config;
+    if (!$value = &core_static(__FUNCTION__ . $name . $fallback)) {
+        if (isset($config[$name])) {
+            $value = $config[$name];
+        } else {
+            $value = $fallback;
+        }
+    }
+    return $value;
 }

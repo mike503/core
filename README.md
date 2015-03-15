@@ -6,6 +6,8 @@ There are so many different ways to do things. I like to create mature single pu
 
 I am a heavy proponent of "defensive programming" and am willing to add extra logic into each area to ensure the program runs without any PHP notices or errors, maintains sane defaults, and will do extra work to prove a result is correct before returning it. We live in a world where the application tier can scale horizontally very easily. I actually just discovered this link, and like the a uthors' Eight Defensive Programmer Strategies: http://c.learncodethehardway.org/book/ex27.html
 
+The goal of this is not only extremely robust, mature and reusable components, but a canonical way to do a lot of common tasks and be able to create fast, clean applications rapidly.
+
 # Globals
 
 Ones you'll notice and should care about:
