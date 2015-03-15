@@ -35,6 +35,8 @@ function core_router_init() {
   if (core_config_get('superdebug', FALSE)) {
     core_log('router', 'request: "' . $GLOBALS['request']['path'] . '" file: "' . $GLOBALS['request']['route']['file'] . '" cached: "' . ($GLOBALS['request']['route']['cached'] > 0 ? core_format_duration($GLOBALS['request']['route']['cached']) : 'n/a') . '"');
   }
+  require $GLOBALS['config']['application_root'] . DIRECTORY_SEPARATOR . 'pages' . DIRECTORY_SEPARATOR . $request['route']['file'];
+  unset($_SESSION['state']);
 }
 
 function core_router_regenerate($force = FALSE) {

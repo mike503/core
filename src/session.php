@@ -16,12 +16,21 @@ function core_session_gc($maxlifetime = 0) {
 function core_session_init() {
   ini_set('session.use_only_cookies', 1);
   ini_set('session.gc_probability', 0);
+// redundant to below?
   ini_set('session.save_handler', 'user');
   ini_set('session.cookie_domain', isset($GLOBALS['config']['cookie_domain']) ? $GLOBALS['config']['cookie_domain'] : $_SERVER['HTTP_HOST']);
   session_name($GLOBALS['config']['session_name']);
   session_set_save_handler('core_session_open', 'core_session_close', 'core_session_read', 'core_session_write', 'core_session_die', 'core_session_gc');
   session_start();
   register_shutdown_function('session_write_close');
+  // form data is saved in a "state"
+  foreach ($_POST as $key => $val) {
+    $_SESSION['state']['form_field_previous'][$key] = $val;
+  }
+  // "destination" is used in various places
+  if (isset($request['params']['destination'])) {
+    $_SESSION['destination'] = $request['params']['destination'];
+  }
 }
 
 function core_session_open($path = '', $name = '') {

@@ -16,7 +16,18 @@
     },
     "autoload": {
         "files": [
-            "app/libs/database.php"
+            "src/cache.memcache.php",
+            "src/cache.php",
+            "src/database.php",
+            "src/formatting.php",
+            "src/notifications.php",
+            "src/request.php",
+            "src/router.php",
+            "src/session.php",
+            "src/theme.php",
+            "src/user.php",
+            "src/utilities.php",
+            "src/validation.php"
         ]
     },
     "config": {
