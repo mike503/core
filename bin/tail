@@ -1,26 +1,25 @@
 #!/usr/bin/env php
 <?php
-require dirname(__DIR__) . '/app/core/bootstrap.php';
+require dirname(__DIR__) . '/vendor/autoload.php';
 
 // TODO: every so often, print the header out?
 printf(" %-6s %-16s %-9s %-10s %-80s\n", 'ID', 'Time', 'Level', 'Type', 'Message');
 while (TRUE) {
-  if (!isset($last)) {
-    $q = core_db_query("SELECT MAX(log_id) FROM core_log");
-    list ($max) = core_db_rows($q);
+    if (!isset($last)) {
+        $q = core_db_query("SELECT MAX(log_id) FROM core_log");
+        list ($max) = core_db_rows($q);
+        core_db_free($q);
+        if ($max > 10) {
+            $last = $max - 10;
+        } else {
+            $last = $max;
+        }
+    }
+    $q = core_db_query("SELECT * FROM core_log WHERE log_id > $last" . ($last == 0 ? ' LIMIT 10' : ''));
+    while ($row = core_db_rows_assoc($q)) {
+        printf(" %-6d %-16s %-9s %-10s %-80s\n", $row['log_id'], date('M d G:i:s', $row['log_timestamp']), $row['log_level'], $row['log_type'], substr($row['log_message'], 0, 80));
+        $last = $row['log_id'];
+    }
     core_db_free($q);
-    if ($max > 10) {
-      $last = $max - 10;
-    }
-    else {
-      $last = $max;
-    }
-  }
-  $q = core_db_query("SELECT * FROM core_log WHERE log_id > $last" . ($last == 0 ? ' LIMIT 10' : ''));
-  while ($row = core_db_rows_assoc($q)) {
-    printf(" %-6d %-16s %-9s %-10s %-80s\n", $row['log_id'], date('M d G:i:s', $row['log_timestamp']), $row['log_level'], $row['log_type'], substr($row['log_message'], 0, 80));
-    $last = $row['log_id'];
-  }
-  core_db_free($q);
-  sleep(1);
+    sleep(1);
 }

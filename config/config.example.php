@@ -42,9 +42,9 @@ $config['session_name'] = 'session';
 // * file = PROJECT_ROOT/var/app.log
 // * syslog = php syslog()
 $config['log'] = array(
-  'database',
-  'file',
-  'syslog',
+    'database',
+    'file',
+    'syslog',
 );
 
 // if you want a LOT of verbosity, turn this on.
@@ -56,5 +56,5 @@ $config['superdebug'] = FALSE;
 $config['cache'] = 'memcache';
 $config['memcache_key_prefix'] = '##EDIT##';
 $config['memcache_servers'] = array(
-  '127.0.0.1:11211',
+    '127.0.0.1:11211',
 );

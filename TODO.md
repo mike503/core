@@ -1,32 +1,7 @@
 STRUCTURE IDEAS:
-library, module, plugin
+
+module, plugin
 theme, templates
-app
-src
-
-
-app/bin
-app/bootstrap.php
-app/libs
-app/data
-app/cache
-app/config
-public
-vendor
-modules
-themes
-pages
-composer.json
-
-
-bin/
-lib/
-doc/
-tests/
-data/
-vendor/
-config/
-public/
 
 ~~~
 
@@ -62,13 +37,6 @@ $mimeType = $finfo->buffer($fileContents);
 Session Fixation
 Invalidate the Session id after user login (or even after each request) with session_regenerate_id().
 
-To delete a cookie safely, use the following snippet:
-
-setcookie ($name, "", 1);
-setcookie ($name, false);
-unset($_COOKIE[$name]);
-
-The first line ensures that cookie expires in browser, the second line is the standard way of removing a cookie (thus you can't store false in a cookie). The third line removes the cookie from your script. Many guides tell developers to use time() - 3600 for expiry, but it might not work if browser time is not correct.
 
 You can also use session_name() to retrieve the name default PHP session cookie.
 

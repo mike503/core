@@ -1,15 +1,13 @@
 <?php
-require __DIR__ . '/../app/core/bootstrap.php';
+require dirname(__DIR__) . '/vendor/autoload.php';
 
 $headers = array(
-  'to' => 'mike503@gmail.com',
-  'subject' => 'Welcome tenant!',
+    'to' => 'mike503@gmail.com',
+    'subject' => 'Test message',
 );
-
-$hi = bar;
 
 $tokens = array(
-  'TENANT' => 'mike testing',
+    'NAME' => 'mike',
 );
 
-var_export(core_email('welcome_tenant', $headers, $tokens));
+var_export(core_email('welcome', $headers, $tokens));

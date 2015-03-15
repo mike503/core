@@ -1,4 +1,4 @@
 <?php
-require 'app/core/bootstrap.php';
+require dirname(__DIR__) . '/vendor/autoload.php';   
 
 core_cache_flush();

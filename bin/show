@@ -1,18 +1,18 @@
 #!/usr/bin/env php
 <?php
-require dirname(__DIR__) . '/app/core/bootstrap.php';
+require dirname(__DIR__) . '/vendor/autoload.php';   
 
 $log_id = isset($_SERVER['argv'][1]) && core_validate_number($_SERVER['argv'][1]) ? intval($_SERVER['argv'][1]) : FALSE;
 
 if (!$log_id) {
-  echo 'Usage: ' . $_SERVER['argv'][0] . ' <message ID>' . PHP_EOL;
-  exit;
+    echo 'Usage: ' . $_SERVER['argv'][0] . ' <message ID>' . PHP_EOL;
+    exit;
 }
 
 $q = core_db_query('SELECT * FROM core_log WHERE log_id=' . $log_id);
 if (core_db_numrows($q) != 1) {
-  echo 'Invalid message ID.' . PHP_EOL;
-  exit;
+    echo 'Invalid message ID.' . PHP_EOL;
+    exit;
 }
 $row = core_db_rows_assoc($q);
 core_db_free($q);
@@ -24,10 +24,10 @@ echo ' Date       : ' . date('r', $row['log_timestamp']) . PHP_EOL;
 echo ' File       : ' . $row['log_file'] . ':' . $row['log_line'] . PHP_EOL;
 echo ' Function   : ' . $row['log_function'] . PHP_EOL;
 if (!empty($row['log_url']) || !empty($row['log_ip']) || $row['log_user_id'] > 0) {
-  echo ' Request ID : ' . $row['log_request_id'] . PHP_EOL;
-  echo ' URL        : ' . $row['log_url'] . PHP_EOL;
-  echo ' Referrer   : ' . $row['log_referrer'] . PHP_EOL;
-  echo ' IP         : ' . $row['log_ip'] . PHP_EOL;
-  echo ' User ID    : ' . $row['log_user_id'] . PHP_EOL;
+    echo ' Request ID : ' . $row['log_request_id'] . PHP_EOL;
+    echo ' URL        : ' . $row['log_url'] . PHP_EOL;
+    echo ' Referrer   : ' . $row['log_referrer'] . PHP_EOL;
+    echo ' IP         : ' . $row['log_ip'] . PHP_EOL;
+    echo ' User ID    : ' . $row['log_user_id'] . PHP_EOL;
 }
 echo ' Message    : ' . $row['log_message'] . PHP_EOL;
