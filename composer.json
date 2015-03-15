@@ -17,7 +17,6 @@
     "autoload": {
         "files": [
             "src/config.php",
-            "src/cache.memcache.php",
             "src/cache.php",
             "src/database.php",
             "src/formatting.php",

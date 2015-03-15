@@ -50,7 +50,8 @@ function core_db_numrows($results) {
 }
 
 function core_db_open() {
-  if (!isset($GLOBALS['config']['database']) || !is_array($GLOBALS['config']['database'])) {
+  global $config;
+  if (!isset($config['database']) || !is_array($config['database'])) {
     core_log('database', 'could not connect to the database. invalid database configuration information array.', 'fatal');
     exit;
   }
@@ -59,7 +60,7 @@ function core_db_open() {
     exit;
   }
   // TODO - see if I can try/catch, or anything here to remove '@'
-  if (!$db = @mysqli_connect($GLOBALS['config']['database']['hostname'], $GLOBALS['config']['database']['username'], $GLOBALS['config']['database']['password'], $GLOBALS['config']['database']['database'], $GLOBALS['config']['database']['port'], $GLOBALS['config']['database']['socket'])) {
+  if (!$db = @mysqli_connect($config['database']['hostname'], $config['database']['username'], $config['database']['password'], $config['database']['database'], $config['database']['port'], $config['database']['socket'])) {
     core_log('ERROR: could not connect to the database. connection error (invalid hostname, socket, username, password, etc.)', 'fatal');
     exit;
   }

@@ -1,5 +1,6 @@
 <?php
-$file = __DIR__ . DIRECTORY_SEPARATOR . 'cache.' . $config['cache'] . '.php';
+$cache = core_config_get('cache', 'default');
+$file = __DIR__ . DIRECTORY_SEPARATOR . 'cache.' . $cache . '.php';
 if (!file_exists($file)) {
   core_log('cache', 'failed to load cache module file: ' . $file);
 }
