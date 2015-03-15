@@ -2,13 +2,13 @@
 // @TODO - PDO? or at least look into mysqli prepared statements
 function core_db_affected() {
     if (core_db_check()) {
-        return mysqli_affected_rows($GLOBALS['db']);
+        return mysqli_affected_rows($GLOBALS['dbh']);
     }
     return FALSE;
 }
 
 function core_db_check() {
-    if (isset($GLOBALS['db'])) {
+    if (isset($GLOBALS['dbh'])) {
         return TRUE;
     } elseif (core_db_open()) {
         return TRUE;
@@ -23,7 +23,7 @@ function core_db_error($message = '', $query = '') {
 function core_db_escape($string = '') {
 // @TODO might have a better function coming soon
     if (core_db_check()) {
-        return mysqli_real_escape_string($GLOBALS['db'], $string);
+        return mysqli_real_escape_string($GLOBALS['dbh'], $string);
     }
 // @TODO - find a way to do this "good enough" without calling a legacy function.
     return mysql_escape_string($string);
@@ -38,7 +38,7 @@ function core_db_free($results) {
 
 function core_db_last() {
     if (core_db_check()) {
-        return mysqli_insert_id($GLOBALS['db']);
+        return mysqli_insert_id($GLOBALS['dbh']);
     }
     return FALSE;
 }
@@ -69,7 +69,7 @@ function core_db_open() {
         exit;
     }
     mysqli_set_charset($db, 'utf8');
-    $GLOBALS['db'] = $db;
+    $GLOBALS['dbh'] = $db;
     return TRUE;
 }
 
@@ -97,8 +97,8 @@ function core_db_paginate($query = '', $current_page = 1, $items_per_page = 15) 
  
 function core_db_query($query = '') {
     if (core_db_check() && !empty($query)) {
-        if (!$results = mysqli_query($GLOBALS['db'], $query)) {
-            core_db_error(mysqli_error($GLOBALS['db']), $query);
+        if (!$results = mysqli_query($GLOBALS['dbh'], $query)) {
+            core_db_error(mysqli_error($GLOBALS['dbh']), $query);
             return FALSE;
         }
         return $results;

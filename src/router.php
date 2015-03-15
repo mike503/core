@@ -83,9 +83,15 @@ function core_router_regenerate($force = FALSE) {
 }
 
 function core_router_argument($argument = 0) {
+    if (!$value = &core_static(__FUNCTION__ . $argument, FALSE)) {
+      $value = core_request_get('arguments/' . $argument, FALSE);
+    }
+    return $value;
+/*
     global $request;
     if (isset($request['route']['arguments'][$argument])) {
         return $request['route']['arguments'][$argument];
     }
     return FALSE;
+*/
 }

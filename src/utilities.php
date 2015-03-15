@@ -188,7 +188,7 @@ function core_log_commit($details = array()) {
     }
 }
 
-// set the default error handler as early as possible.
+// @TODO we're still not getting certain PHP errors.
 function core_error_handler($level = 0, $message = '', $file = '', $line = 0, $context = array()) {
     $message = $message . PHP_EOL;
     $message .= 'Stack trace:';
@@ -233,28 +233,8 @@ function core_log($type = '', $message = '', $level = 'debug') {
 }
 
 function core_debug($type = '', $message = '') {
-    global $config;
-    if (!empty($config['superdebug'])) {
+    if (core_config_get('superdebug', FALSE) == TRUE) {
         core_log($type, $message, 'debug');
-    }
-}
-
-function core_bootstrap() {
-    global $config;
-    $config['project_root'] = dirname(dirname(dirname(dirname(__DIR__))));
-    $config['document_root'] = $config['project_root'] . DIRECTORY_SEPARATOR . 'public';
-    require $config['project_root'] . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php';
-
-    set_error_handler('core_error_handler');
-
-    core_cache_init();
-
-    if (isset($_SERVER['HTTP_HOST'])) {
-        core_session_init();
-        core_request_init();
-        core_user_init();
-        core_theme_init();
-        core_router_init();
     }
 }
 
@@ -285,4 +265,24 @@ function core_config_get($name = '', $fallback = '') {
         }
     }
     return $value;
+}
+
+function core_bootstrap() {
+    global $config;
+    $config['project_root'] = dirname(dirname(dirname(dirname(__DIR__))));
+    $config['document_root'] = $config['project_root'] . DIRECTORY_SEPARATOR . 'public';
+// this runs into issues on our test environment
+    require $config['project_root'] . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php';
+
+    set_error_handler('core_error_handler');
+
+    core_cache_init();
+
+    if (isset($_SERVER['HTTP_HOST'])) {
+        core_session_init();
+        core_request_init();
+        core_user_init();
+        core_theme_init();
+        core_router_init();
+    }
 }
