@@ -23,7 +23,7 @@ function core_request_init() {
 
 function core_request_get($name = '', $fallback = '') {
     global $request;
-    if (!$value = &core_static(__FUNCTION__ . $name . $fallback)) {
+    if (!$value = &core_static(__FUNCTION__ . ':' . $name)) {
         if (isset($request[$name])) {
             $value = $request[$name];
         } else {
@@ -35,7 +35,7 @@ function core_request_get($name = '', $fallback = '') {
 
 function core_request_argument($position = 0, $fallback = '') {
     global $request;
-    if (!$value = &core_static(__FUNCTION__ . $position . $fallback)) {
+    if (!$value = &core_static(__FUNCTION__ . ':' . $position)) {
         if (isset($request['arguments'][$position])) {
             $value = $request['arguments'][$position];
         } else {

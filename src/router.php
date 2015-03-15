@@ -1,7 +1,7 @@
 <?php
 function core_router_init() {
     global $config, $request;
-    if ($cached = core_cache_get('router', 'route:' . $request['path'])) {
+    if ($cached = core_cache_get('router', $request['path'])) {
         $request['route'] = $cached;
     } else {
         if (core_router_regenerate()) {
@@ -29,7 +29,7 @@ function core_router_init() {
                 break;
             }
         }
-        core_cache_set('router', 'route:' . $request['path'], $request['route'], $expiry);
+        core_cache_set('router', $request['path'], $request['route'], $expiry);
     }
     if (core_config_get('superdebug', FALSE)) {
         core_log('router', 'request: "' . $request['path'] . '" file: "' . $request['route']['file'] . '" cached: "' . ($request['route']['cached'] > 0 ? core_format_duration($request['route']['cached']) : 'n/a') . '"');

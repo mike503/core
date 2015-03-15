@@ -167,6 +167,36 @@ function core_log_commit($details = array()) {
     $details['ip'] = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
     $details['referrer'] = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] :'';
 
+// @TODO - use "html" instead? or "output" or "console"?
+    if (in_array('display', $logging)) {
+// @TODO - clean this up
+        switch ($details['level']) {
+            case 'fatal':
+                $color = 'red';
+                break;
+            case 'error':
+                $color = 'red';
+                break;
+            case 'warning':
+                $color = 'orange';
+                break;
+            case 'notice':
+                $color = 'orange';
+                break;
+            case 'debug':
+                $color = 'black';
+                break;
+        }
+        echo '<div style="border: 1px solid ' . $color . '; padding: 10px; margin-bottom: 10px;">';
+        echo 'Error:<br />';
+        echo 'level: ' . $details['level'] . '<br />';
+        echo 'type: ' . $details['type'] . '<br />';
+#        echo 'function: ' . $details['function'] . '()<br />';
+#        echo 'file/line: ' . $details['file'] . ':' . $details['line'] . '<br />';
+        echo 'message: ' . $details['message'] . '<br />';
+        echo '</div>';
+    }
+
     if (in_array('file', $logging)) {
         $dir = $config['project_root'] . DIRECTORY_SEPARATOR . 'var';
         if (!is_dir($dir)) {
@@ -260,7 +290,7 @@ function core_require_file($file = '') {
 
 function core_config_get($name = '', $fallback = '') {
     global $config;
-    if (!$value = &core_static(__FUNCTION__ . $name . $fallback)) {
+    if (!$value = &core_static(__FUNCTION__ . ':' . $name)) {
         if (isset($config[$name])) {
             $value = $config[$name];
         } else {
