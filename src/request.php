@@ -32,3 +32,15 @@ function core_request_get($name = '', $fallback = '') {
     }
     return $value;
 }
+
+function core_request_argument($position = 0, $fallback = '') {
+    global $request;
+    if (!$value = &core_static(__FUNCTION__ . $position . $fallback)) {
+        if (isset($request['arguments'][$position])) {
+            $value = $request['arguments'][$position];
+        } else {
+            $value = $fallback;
+        }
+    }
+    return $value;
+}

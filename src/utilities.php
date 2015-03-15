@@ -160,6 +160,7 @@ function core_log_commit($details = array()) {
         $details['level'] = 'debug';
     }
 
+    $details['function'] = isset($details['function']) ? $details['function'] : '';
     $details['url'] = isset($GLOBALS['request']['url']) ? $GLOBALS['request']['url'] : '';
     $details['id'] = isset($GLOBALS['request']['id']) ? $GLOBALS['request']['id'] : '';
     $details['user_id'] = isset($GLOBALS['user']['user_id']) ? $GLOBALS['user']['user_id'] : 0;
@@ -193,7 +194,9 @@ function core_error_handler($level = 0, $message = '', $file = '', $line = 0, $c
     $message = $message . PHP_EOL;
     $message .= 'Stack trace:';
     foreach (debug_backtrace() as $step) {
-        $message .= PHP_EOL . $step['file'] . ':' . $step['line'];
+        if (isset($step['file']) && isset($step['line'])) {
+            $message .= PHP_EOL . $step['file'] . ':' . $step['line'];
+        }
     }
     $details = array(
         'timestamp' => core_timestamp(),
@@ -275,6 +278,7 @@ function core_bootstrap() {
     require $config['project_root'] . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php';
 
     set_error_handler('core_error_handler');
+    register_shutdown_function('core_shutdown_function');
 
     core_cache_init();
 
@@ -284,5 +288,17 @@ function core_bootstrap() {
         core_user_init();
         core_theme_init();
         core_router_init();
+    }
+}
+
+function core_shutdown_function() {
+    // allows us to capture fatal errors. as long as they're defined in the shutdown function before it happens.
+    if ($error = error_get_last()) {
+        core_error_handler($error['type'], $error['message'], $error['file'], $error['line']);
+        if ($error['type'] === E_ERROR || $error['type'] === E_USER_ERROR) {
+// @TODO: throw an official 5xx page?
+             header('HTTP/1.0 500 Server Error');
+             exit;
+        }
     }
 }

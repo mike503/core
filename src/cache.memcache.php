@@ -39,7 +39,7 @@ function core_cache_get($bucket = '', $key = '') {
 function core_cache_open() {
     global $config;
     $return = FALSE;
-    if (!empty($config['cache'])) {
+    if (empty($config['cache'])) {
         core_log('cache', 'cache functions are being called, but are not enabled.', 'notice');
         return FALSE;
     }

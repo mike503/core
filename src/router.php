@@ -18,9 +18,9 @@ function core_router_init() {
         foreach ($routes as $pattern => $file) {
             if (preg_match('|' . $pattern . '|', $request['path'], $args)) {
                 if (file_exists($config['project_root'] . DIRECTORY_SEPARATOR . 'handlers' . DIRECTORY_SEPARATOR . $file)) {
-                    $request['route'] = array(
+                   $request['arguments'] = $args;
+                   $request['route'] = array(
                         'file' => $file,
-                        'arguments' => $args,
                         'cached' => core_timestamp(),
                     );
                     // 1 hour cache for a hit.
@@ -80,18 +80,4 @@ function core_router_regenerate($force = FALSE) {
         core_cache_flush('router');
     }
     return TRUE;
-}
-
-function core_router_argument($argument = 0) {
-    if (!$value = &core_static(__FUNCTION__ . $argument, FALSE)) {
-      $value = core_request_get('arguments/' . $argument, FALSE);
-    }
-    return $value;
-/*
-    global $request;
-    if (isset($request['route']['arguments'][$argument])) {
-        return $request['route']['arguments'][$argument];
-    }
-    return FALSE;
-*/
 }
