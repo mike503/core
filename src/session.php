@@ -44,7 +44,6 @@ function core_session_init() {
 }
 
 function core_session_open($path = '', $name = '') {
-echo "opened";
   return TRUE;
 }
 
