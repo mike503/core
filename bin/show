@@ -1,6 +1,7 @@
 #!/usr/bin/env php
 <?php
-require dirname(__DIR__) . '/vendor/autoload.php';   
+require dirname(dirname(dirname(dirname(__DIR__)))) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+core_bootstrap();
 
 $log_id = isset($_SERVER['argv'][1]) && core_validate_number($_SERVER['argv'][1]) ? intval($_SERVER['argv'][1]) : FALSE;
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env php
 <?php
-require dirname(__DIR__) . '/vendor/autoload.php';
+require dirname(dirname(dirname(dirname(__DIR__)))) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+core_bootstrap();
 
 // TODO: every so often, print the header out?
 printf(" %-6s %-16s %-9s %-10s %-80s\n", 'ID', 'Time', 'Level', 'Type', 'Message');

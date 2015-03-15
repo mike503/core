@@ -1,4 +1,6 @@
+#!/usr/bin/env php
 <?php
-require dirname(__DIR__) . '/vendor/autoload.php';   
+require dirname(dirname(dirname(dirname(__DIR__)))) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+core_bootstrap();
 
 core_cache_flush();
