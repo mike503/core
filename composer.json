@@ -14,7 +14,7 @@
     ],
     "require": {
         "php": ">=5.5.0",
-        "symfony/yaml": "~3.0@dev"
+        "symfony/yaml": "2.6.4"
     },
     "autoload": {
         "files": [
