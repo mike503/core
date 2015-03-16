@@ -12,7 +12,6 @@ function core_request_init() {
     }
     $request['parts'] = explode('/', $request['path']);
     $request['base'] = core_config_get('base_path', '');
-    $request['assets'] = core_config_get('asset_path', '');
 
     // trim off trailing slash if necessary.
     if (strlen($request['path']) > 1 && substr($request['path'], -1) == '/') {
@@ -34,13 +33,13 @@ function core_request_get($name = '', $fallback = '') {
     return $return;
 }
 
-function core_request_argument($position = 0, $fallback = '') {
-    if ($return = &core_static(__FUNCTION__ . ':' . $position) && $return !== NULL) {
+function core_request_param($name = '', $fallback = '') {
+    if ($return = &core_static(__FUNCTION__ . ':' . $name) && $return !== NULL) {
         return $return;
     }
     global $request;
-    if (isset($request['arguments'][$position])) {
-        $return = $request['arguments'][$position];
+    if (isset($request['params'][$name])) {
+        $return = $request['params'][$name];
     } else {
         $return = $fallback;
     }

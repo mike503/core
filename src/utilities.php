@@ -10,7 +10,7 @@ function core_backtrace($quick = FALSE) {
         );
     }
     foreach ($backtrace as $item) {
-        if (in_array($item['function'], array('core_error_handler', 'core_log_commit', 'core_log'))) {
+        if (in_array($item['function'], array('core_error_handler', 'core_log_commit', 'core_backtrace'))) {
             continue;
         }
         if (isset($item['args'])) {
@@ -23,7 +23,7 @@ function core_backtrace($quick = FALSE) {
                 } elseif (is_numeric($arg)) {
                     $str = $arg;
                 } else {
-                    $str = "'$arg'";
+                    $str = "'" . $arg . "'";
                 }
                 $args[] = $str;
             }
@@ -42,8 +42,8 @@ function core_log_commit($details = array()) {
     }
 
     $details['level'] = core_error_normalize($details['level']);
-    $details['url'] = isset($GLOBALS['request']['url']) ? $GLOBALS['request']['url'] : '';
-    $details['id'] = isset($GLOBALS['request']['id']) ? $GLOBALS['request']['id'] : '';
+    $details['url'] = core_request_get('url');
+    $details['id'] = core_request_get('id');
     $details['user_id'] = isset($GLOBALS['user']['user_id']) ? $GLOBALS['user']['user_id'] : 0;
     $details['ip'] = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
     $details['referrer'] = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] :'';
@@ -54,6 +54,9 @@ function core_log_commit($details = array()) {
             echo '<fieldset style="border: 1px solid ' . core_error_color($details['level']) . '; padding: 10px; margin-bottom: 10px;">';
             echo '<legend>' . ucfirst($details['level']) . ' (module: ' . $details['module'] . ')</legend>';
             echo nl2br(core_format_escape($details['message']));
+            if ($details['module'] == 'php') {
+                echo '<br /><br />in ' . $details['file'] . ', line ' . $details['line'];
+            }
             if ($details['level'] != 'debug') {
                 echo '<br /><br />Stack trace:<ol>';
                 $backtrace = core_backtrace();
@@ -66,6 +69,9 @@ function core_log_commit($details = array()) {
         } else {
             echo ucfirst($details['level']) . ' (module: ' . $details['module'] . '):' . PHP_EOL;
             echo $details['message'];
+            if ($details['module'] == 'php') {
+                echo 'in ' . $details['file'] . ', line ' . $details['line'];
+            }
             if ($details['level'] != 'debug') {
                 echo PHP_EOL . PHP_EOL . 'Stack trace:' . PHP_EOL;
                 $backtrace = core_backtrace();
@@ -339,17 +345,18 @@ function core_message_get($type = '') {
 }
 
 function core_destination($url = '') {
-    if (empty($url)) {
-        if (isset($GLOBALS['request']['params']['destination'])) {
-            $url = $GLOBALS['request']['params']['destination'];
-        } elseif (isset($_SESSION['destination'])) {
-            $url = $_SESSION['destination'];
-            unset($_SESSION['destination']);
-        } else {
-            $url = !empty($GLOBALS['request']['base']) ? $GLOBALS['request']['base'] : '/';
-        }
+    if (!empty($url)) {
+        return $url;
     }
-    return $url;
+    if ($url = core_request_params('destination')) {
+        return $url;
+    }
+    if (isset($_SESSION['destination'])) {
+        $url = $_SESSION['destination'];
+        unset($_SESSION['destination']);
+        return $_SESSION['destination'];
+    }
+    return core_request_get('base', '/');
 }
 
 // should go in theme layer, probably
@@ -378,13 +385,6 @@ function core_cookie_delete($name = '') {
     unset($_COOKIE[$name]);
 }
 
-function core_require_file($file = '') {
-    if (!file_exists($file)) {
-        return FALSE;
-    }
-    require $file;
-}
-
 function core_config_get($name = '', $fallback = '') {
     if ($return = &core_static(__FUNCTION__ . ':' . $name) && $return !== NULL) {
         return $return;
@@ -400,10 +400,11 @@ function core_config_get($name = '', $fallback = '') {
 
 function core_bootstrap() {
     global $config;
+
     $config['project_root'] = dirname(dirname(dirname(dirname(__DIR__))));
-    $config['document_root'] = $config['project_root'] . DIRECTORY_SEPARATOR . 'public';
+    $config['document_root'] = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'public';
 // @TODO this runs into issues on our test environment
-    require $config['project_root'] . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php';
+    require core_config_get('project_root') . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php';
 
     set_error_handler('core_error_handler');
     register_shutdown_function('core_shutdown_function');
@@ -418,9 +419,12 @@ function core_bootstrap() {
     }
 
 // @TODO MODULE CONCEPT. TBD. SHOULD BE MORE THAN JUST $modules ARRAY
-    require $config['project_root'] . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'modules.php';
+    require core_config_get('project_root') . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'modules.php';
     foreach ($modules as $module) {
-        core_require_file($config['project_root'] . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . $module . '.php');
+        $file = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . $module . '.php';
+        if (file_exists($file)) {
+            require $file;
+        }
     }
 
     if (isset($_SERVER['HTTP_HOST'])) {
