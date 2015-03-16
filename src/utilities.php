@@ -386,15 +386,16 @@ function core_require_file($file = '') {
 }
 
 function core_config_get($name = '', $fallback = '') {
-    global $config;
-    if (!$value = &core_static(__FUNCTION__ . ':' . $name)) {
-        if (isset($config[$name])) {
-            $value = $config[$name];
-        } else {
-            $value = $fallback;
-        }
+    if ($return = &core_static(__FUNCTION__ . ':' . $name) && $return !== NULL) {
+        return $return;
     }
-    return $value;
+    global $config;
+    if (isset($config[$name])) {
+        $return = $config[$name];
+    } else {
+        $return = $fallback;
+    }
+    return $return;
 }
 
 function core_bootstrap() {

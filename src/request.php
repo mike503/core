@@ -22,25 +22,27 @@ function core_request_init() {
 }
 
 function core_request_get($name = '', $fallback = '') {
-    global $request;
-    if (!$value = &core_static(__FUNCTION__ . ':' . $name)) {
-        if (isset($request[$name])) {
-            $value = $request[$name];
-        } else {
-            $value = $fallback;
-        }
+    if ($return = &core_static(__FUNCTION__ . ':' . $name) && $return !== NULL) {
+        return $return;
     }
-    return $value;
+    global $request;
+    if (isset($request[$name])) {
+        $return = $request[$name];
+    } else {
+        $return = $fallback;
+    }
+    return $return;
 }
 
 function core_request_argument($position = 0, $fallback = '') {
-    global $request;
-    if (!$value = &core_static(__FUNCTION__ . ':' . $position)) {
-        if (isset($request['arguments'][$position])) {
-            $value = $request['arguments'][$position];
-        } else {
-            $value = $fallback;
-        }
+    if ($return = &core_static(__FUNCTION__ . ':' . $position) && $return !== NULL) {
+        return $return;
     }
-    return $value;
+    global $request;
+    if (isset($request['arguments'][$position])) {
+        $return = $request['arguments'][$position];
+    } else {
+        $return = $fallback;
+    }
+    return $return;
 }
