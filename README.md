@@ -12,14 +12,24 @@ The goal of this is not only extremely robust, mature and reusable components, b
 
 Ones you'll notice and should care about:
 
-* $config - all configuration values from config.php as well as some programmatically created on-the-fly.
+* $config - all configuration values from config.php as well as some programmatically created on-the-fly
 * $request - created under web context. all aspects related to the current request. useful for extracting parts of the URI, argument parsing, etc.
-* $user - created under web context. the current user logged in (or an anonymous skeleton if logged out.)
+  * id - random ID assigned to the request. helpful for referencing exact requests in logs and such.
+  * url -  absolute URL including scheme, path, query string, everything
+  * scheme -  https, http, etc.
+  * host - host servicing the request
+  * path - path (without query string)
+  * parts - array of path parts split by / (numeric index)
+  * query - query string
+  * params - query string params
+  * base - base path (from $config) - useful for asset reference and link building
+  * arguments - array of router pattern replacements (numeric index)
+* $user - created under web context. the current user logged in (or an anonymous skeleton if logged out)
 
 Behind the scenes (just for reference, you shouldn't care about them)
 
-* $dbh - database resource handle.
-* $ch - cache resource handle.
+* $dbh - database resource handle
+* $ch - cache resource handle
 
 # Roughly working or stubbed out
 
