@@ -10,7 +10,7 @@ function core_backtrace($quick = FALSE) {
         );
     }
     foreach ($backtrace as $item) {
-        if (in_array($item['function'], array('core_log_commit', 'core_log'))) {
+        if (in_array($item['function'], array('core_error_handler', 'core_log_commit', 'core_log'))) {
             continue;
         }
         if (isset($item['args'])) {
@@ -48,19 +48,34 @@ function core_log_commit($details = array()) {
     $details['ip'] = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
     $details['referrer'] = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] :'';
 
-    if (in_array('display', $logging)) {
-        echo '<fieldset style="border: 1px solid ' . core_error_color($details['level']) . '; padding: 10px; margin-bottom: 10px;">';
-        echo '<legend>' . ucfirst($details['level']) . ' (module: ' . $details['module'] . ')</legend>';
-        echo nl2br(core_format_escape($details['message']));
-        if ($details['level'] != 'debug') {
-            echo '<br /><br />Stack trace:<ol>';
-            $backtrace = core_backtrace();
-            foreach ($backtrace as $item) {
-                echo '<li>' . $item . '</li>';
+    if (in_array('console', $logging)) {
+// @TODO - better "web context" check
+        if (isset($_SERVER['HTTP_HOST'])) {
+            echo '<fieldset style="border: 1px solid ' . core_error_color($details['level']) . '; padding: 10px; margin-bottom: 10px;">';
+            echo '<legend>' . ucfirst($details['level']) . ' (module: ' . $details['module'] . ')</legend>';
+            echo nl2br(core_format_escape($details['message']));
+            if ($details['level'] != 'debug') {
+                echo '<br /><br />Stack trace:<ol>';
+                $backtrace = core_backtrace();
+                foreach ($backtrace as $item) {
+                    echo '<li>' . $item . '</li>';
+                }
+                echo '</ol>';
             }
-            echo '</ol>';
+            echo '</fieldset>';
+        } else {
+            echo ucfirst($details['level']) . ' (module: ' . $details['module'] . '):' . PHP_EOL;
+            echo $details['message'];
+            if ($details['level'] != 'debug') {
+                echo PHP_EOL . PHP_EOL . 'Stack trace:' . PHP_EOL;
+                $backtrace = core_backtrace();
+                $i = 1;
+                foreach ($backtrace as $item) {
+                    echo $i . '. ' . $item . PHP_EOL;
+                    $i++;
+                }
+            }
         }
-        echo '</fieldset>';
     }
 
     if (in_array('syslog', $logging)) {
@@ -196,6 +211,14 @@ function core_error_handler($level = 0, $message = '', $file = '', $line = 0, $c
             'file' => $backtrace[0]['args'][4]['error']['file'],
             'line' => $backtrace[0]['args'][4]['error']['line'],
         );
+    } elseif (!empty($backtrace[0]['args'][0])) {
+        $details = array(
+            'module' => 'php',
+            'message' => $backtrace[0]['args'][1],
+            'level' => core_error_normalize($backtrace[0]['args'][0]),
+            'file' => $backtrace[0]['args'][2],
+            'line' => $backtrace[0]['args'][3],
+        );
     } else {
 // @TODO: what to do here?
 echo "core_error_handler given an error that it does not know how to handle yet";
@@ -229,13 +252,10 @@ function core_debug($module = '', $message = '') {
 // @TODO - additional headers we could look at using: "Reply-To:" "Content-type:" "MIME-Version:"
 // @TODO - might want to reformat body to make sure all line endings are CRLF (\r\n)
 // @TODO - do I like to use the "-f" at the end? should it also be the "From"
+// @TODO - more professional mailer
 function core_email($type = '', $headers = array(), $tokens = array()) {
 
     if (!isset($headers['to']) || !core_validate_email($headers['to'])) {
-        core_log('mail', 'cannot send email to an invalid address', 'error');
-        return FALSE;
-    }
-    if (!isset($headers['subject']) || empty($headers['subject'])) {
         core_log('mail', 'cannot send email to an invalid address', 'error');
         return FALSE;
     }
@@ -243,8 +263,10 @@ function core_email($type = '', $headers = array(), $tokens = array()) {
     // define a unique mail ID for tracing this back.
     $mail_id = date('Ymd') . substr(md5($headers['to'] . $GLOBALS['config']['salt']) . md5(time() . $GLOBALS['config']['salt']), 0, 40);
 
-    $headers['from'] = isset($headers['from']) ? $headers['from'] : $GLOBALS['config']['site_email'];
-    $additional_headers = 'From: ' . $headers['from'] . "\r\n";
+    $additional_headers = '';
+    if ($from = core_config_get('site_email')) {
+        $additional_headers .= 'From: ' . $from . "\r\n";
+    }
     $additional_headers .= 'X-Mail-ID: ' . $mail_id . "\r\n";
     if (isset($headers['cc'])) {
         $additional_headers .= 'Cc: ' . $headers['cc'] . "\r\n";
@@ -253,23 +275,34 @@ function core_email($type = '', $headers = array(), $tokens = array()) {
         $additional_headers .= 'Bcc: ' . $headers['bcc'] . "\r\n";
     }
 
-// @TODO - have not tested this since the remap
-    $template = $GLOBALS['config']['theme_root'] . DIRECTORY_SEPARATOR . 'emails' . DIRECTORY_SEPARATOR . $type . '.txt';
+    $template = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'themes' . DIRECTORY_SEPARATOR . core_config_get('site_theme') . DIRECTORY_SEPARATOR . 'email' . DIRECTORY_SEPARATOR . $type . '.xml';
     if (!file_exists($template)) {
         core_log('mail', 'email template missing: ' . $template, 'error');
         return FALSE;
     }
+    if (!$xml = simplexml_load_file($template)) {
+        core_log('mail', 'email template failed parsing: ' . $template, 'error');
+        return FALSE;
+    }
 
-    // body replacement.
-    $body = file_get_contents($template);
+    $subject = $xml->subject;
+    $body = $xml->body;
     foreach ($tokens as $key => $value) {
+        $subject = str_replace('%%' . $key . '%%', $value, $subject);
         $body = str_replace('%%' . $key . '%%', $value, $body);
     }
     $body .= PHP_EOL;
     $body .= 'Mail ID: ' . $mail_id . PHP_EOL;
 
-    core_log('mail', 'mail-id: ' . $mail_id . ' headers: ' . print_r($headers, TRUE), 'info');
-    if (!mail($headers['to'], $headers['subject'], $body, $additional_headers, '-f' . $GLOBALS['config']['site_email'])) {
+    $log = array(
+        'id' => $mail_id,
+// @TODO - make a "strip project root off path" function?
+        'template' => str_replace(core_config_get('project_root') . DIRECTORY_SEPARATOR, '', $template),
+        'headers' => $headers,
+        'tokens' => $tokens,
+    );
+    core_log('mail', print_r($log, TRUE), 'info');
+    if (!mail($headers['to'], $subject, $body, $additional_headers, '-f' . core_config_get('site_email'))) {
         core_log('mail', 'mail-id: ' . $mail_id . ' failed to send', 'error');
         return FALSE;
     }
