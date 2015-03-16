@@ -63,6 +63,11 @@ function core_log_commit($details = array()) {
         echo '</fieldset>';
     }
 
+    if (in_array('syslog', $logging)) {
+        openlog('php/core', LOG_ODELAY | LOG_PID, LOG_USER);
+        syslog(core_error_syslog($details['level']), $details['module'] . ': ' . $details['message']);
+    }
+
     if ($details['level'] != 'debug') {
         $details['message'] .= PHP_EOL . PHP_EOL . 'Stack trace:' . PHP_EOL;
         $backtrace = core_backtrace();
@@ -83,11 +88,6 @@ function core_log_commit($details = array()) {
 // only execute this for specific levels
 // @TODO - figure out a cleaner way without having to "@"
         @file_put_contents($file, print_r($details, TRUE), FILE_APPEND);
-    }
-
-    if (in_array('syslog', $logging)) {
-        openlog('php/core', LOG_ODELAY | LOG_PID, LOG_USER);
-        syslog(core_error_syslog($details['level']), $details['message']);
     }
 
     if (in_array('database', $logging)) {

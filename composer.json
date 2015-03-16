@@ -2,6 +2,7 @@
     "name": "mike503/core",
     "description": "Procedural library and pseudo-framework for PHP",
     "homepage": "https://github.com/mike503/core",
+    "minimum-stability": "dev",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -12,7 +13,8 @@
         }
     ],
     "require": {
-        "php": ">=5.5.0"
+        "php": ">=5.5.0",
+        "symfony/yaml": "~3.0@dev"
     },
     "autoload": {
         "files": [
