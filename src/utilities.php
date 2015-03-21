@@ -426,7 +426,6 @@ function core_bootstrap() {
             require $file;
         }
     }
-
     if (isset($_SERVER['HTTP_HOST'])) {
 // @TODO ROUTE DEFINITION SHOULD BE MORE THAN JUST $routes ARRAY
         core_router_init();
@@ -442,5 +441,17 @@ function core_shutdown_function() {
             header('HTTP/1.0 500 Server Error');
             exit;
         }
+    }
+}
+
+// ref: http://www.serverphorums.com/read.php?7,721889
+if (!function_exists('array_map_key')) {
+    function array_map_key(Callable $callback, $array) {
+        $return = array();
+        foreach ($array as $key => $value) {
+            list($k, $v) = $callback($key, $value);
+            $return[$k] = $v;
+        }
+        return $return;
     }
 }

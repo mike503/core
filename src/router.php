@@ -16,7 +16,8 @@ function core_router_init() {
         // 10 seconds by default.
         $expiry = 10;
         foreach ($routes as $pattern => $handler) {
-            if (preg_match('|' . $pattern . '|', $request['path'], $arguments)) {
+// @TODO - $handler becomes 'function' and 'file'
+            if (preg_match('|' . str_replace('|', '\\|', $pattern) . '|', $request['path'], $arguments)) {
                $request['arguments'] = $arguments;
                $request['route'] = array(
                     'handler' => $handler,
@@ -63,8 +64,13 @@ function core_router_regenerate($force = FALSE) {
     if (!file_exists($cache_file) || filemtime($route_file) > filemtime($cache_file) || $force) {
         core_log('router', 'regenerating route cache file', 'info');
         require $route_file;
-        function _route_compare($a, $b) {
-            if (strlen($a) > strlen($b)) {
+        function _route_strip($string = '') {
+            $string = preg_replace('/\(\\\(\S)(\+|)\)/', '', $string);
+            $string = preg_replace('/[^0-9A-Za-z\/]/', '', $string);
+            return $string;
+        }
+        function _route_compare($a = '', $b = '') {
+            if (strlen(_route_strip($a)) > strlen(_route_strip($b))) {
                 return $a;
             }
         }
