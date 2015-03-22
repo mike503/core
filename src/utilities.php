@@ -73,12 +73,13 @@ function core_log_commit($details = array()) {
                 echo 'in ' . $details['file'] . ', line ' . $details['line'];
             }
             if ($details['level'] != 'debug') {
-                echo PHP_EOL . PHP_EOL . 'Stack trace:' . PHP_EOL;
-                $backtrace = core_backtrace();
-                $i = 1;
-                foreach ($backtrace as $item) {
-                    echo $i . '. ' . $item . PHP_EOL;
-                    $i++;
+                if ($backtrace = core_backtrace()) {
+                    echo PHP_EOL . PHP_EOL . 'Stack trace:' . PHP_EOL;
+                    $i = 1;
+                    foreach ($backtrace as $item) {
+                        echo $i . '. ' . $item . PHP_EOL;
+                        $i++;
+                    }
                 }
             }
         }
@@ -90,12 +91,13 @@ function core_log_commit($details = array()) {
     }
 
     if ($details['level'] != 'debug') {
-        $details['message'] .= PHP_EOL . PHP_EOL . 'Stack trace:' . PHP_EOL;
-        $backtrace = core_backtrace();
-        $i = 1;
-        foreach ($backtrace as $item) {
-           $details['message'] .= $i . '. ' . $item . PHP_EOL;
-           $i++;
+        if ($backtrace = core_backtrace()) {
+            $details['message'] .= PHP_EOL . PHP_EOL . 'Stack trace:' . PHP_EOL;
+            $i = 1;
+            foreach ($backtrace as $item) {
+                $details['message'] .= $i . '. ' . $item . PHP_EOL;
+                $i++;
+            }
         }
     }
 
@@ -419,11 +421,14 @@ function core_bootstrap() {
     }
 
 // @TODO MODULE CONCEPT. TBD. SHOULD BE MORE THAN JUST $modules ARRAY
-    require core_config_get('project_root') . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'modules.php';
-    foreach ($modules as $module) {
-        $file = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . $module . '.php';
-        if (file_exists($file)) {
-            require $file;
+    $file = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'modules.php';
+    if (file_exists($file)) {
+        require $file;
+        foreach ($modules as $module) {
+            $file = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . $module . '.php';
+            if (file_exists($file)) {
+                require $file;
+            }
         }
     }
     if (isset($_SERVER['HTTP_HOST'])) {
