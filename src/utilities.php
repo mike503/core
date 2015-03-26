@@ -429,6 +429,9 @@ function core_bootstrap() {
             if (file_exists($file)) {
                 require $file;
             }
+            if (function_exists($module . '_init')) {
+                call_user_func($module . '_init');
+            }
         }
     }
     if (isset($_SERVER['HTTP_HOST'])) {

@@ -74,3 +74,10 @@ function core_user_get_by_email($email = '') {
     }
     return FALSE;
 }
+
+function core_user_require_login() {
+    if (!core_user_logged_in()) {
+        header('Location: ' . core_request_get('base') . '/login?destination=' . urlencode(core_request_get('url')));
+        exit;
+    }
+}
