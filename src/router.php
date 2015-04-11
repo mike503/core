@@ -22,20 +22,22 @@ function core_router_init() {
                 );
                 // 1 hour cache for a hit.
                 $expiry = 3600;
+                core_cache_set('router', $request['path'], $request['route'], $expiry);
                 break;
             }
         }
-        core_cache_set('router', $request['path'], $request['route'], $expiry);
     }
     if (core_config_get('superdebug', FALSE)) {
         core_log('router', 'request: "' . $request['path'] . '" handler: "' . $request['route']['handler'] . '" cached: "' . ($request['route']['cached'] > 0 ? core_format_duration($request['route']['cached']) : 'n/a') . '"');
     }
     if (!isset($request['route']['handler'])) {
+// @TODO - cache not founds for a short period?
         core_not_found();
     }
     $handler = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'handlers' . DIRECTORY_SEPARATOR . $request['route']['handler'];
     if (!file_exists($handler)) {
         core_log('router', 'handler file does not exist: ' . $handler, 'fatal');
+// @TODO - cache not founds for a short period?
         core_not_found();
     }
     require $handler;
