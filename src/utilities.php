@@ -23,6 +23,7 @@ function core_backtrace($quick = FALSE) {
             'file' => $backtrace[1]['file'],
         );
     }
+    $return = array();
     foreach ($backtrace as $item) {
         if (in_array($item['function'], array('core_error_handler', 'core_log_commit', 'core_backtrace'))) {
             continue;
@@ -43,7 +44,9 @@ function core_backtrace($quick = FALSE) {
             }
             $args = implode(', ', $args);
         }
-        $return[] = str_replace(core_config_get('project_root') . DIRECTORY_SEPARATOR, '', $item['file']) . ':' . $item['line'] . ' ' . $item['function'] . '(' . (!empty($args) ? $args : '') . ')';;
+        if ($item['function'] != 'core_shutdown_function' && $item['function'] != 'trigger_error') {
+            $return[] = str_replace(core_config_get('project_root') . DIRECTORY_SEPARATOR, '', $item['file']) . ':' . $item['line'] . ' ' . $item['function'] . '(' . (!empty($args) ? $args : '') . ')';;
+        }
     }
     return $return;
 }
@@ -72,12 +75,14 @@ function core_log_commit($details = array()) {
                 echo '<br /><br />in ' . $details['file'] . ', line ' . $details['line'];
             }
             if ($details['level'] != 'debug') {
-                echo '<br /><br />Stack trace:<ol>';
                 $backtrace = core_backtrace();
-                foreach ($backtrace as $item) {
-                    echo '<li>' . $item . '</li>';
+                if (!empty($backtrace)) {
+                    echo '<br /><br />Stack trace:<ol>';
+                    foreach ($backtrace as $item) {
+                        echo '<li>' . $item . '</li>';
+                    }
+                    echo '</ol>';
                 }
-                echo '</ol>';
             }
             echo '</fieldset>';
         } else {
@@ -421,6 +426,8 @@ function core_bootstrap() {
     $config['document_root'] = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'public';
 // @TODO this runs into issues on our test environment
     require core_config_get('project_root') . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php';
+
+    $config['timestamp'] = time();
 
     set_error_handler('core_error_handler');
     register_shutdown_function('core_shutdown_function');
