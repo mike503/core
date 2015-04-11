@@ -26,9 +26,17 @@ function core_format_duration($since = 0) {
     }
 }
 
+function core_format_date($timestamp = 0) {
+// TODO - configurable
+    return date('Y/m/d', $timestamp);
+}
+
+function core_format_datetime($timestamp = 0) {
+// TODO - configurable
+    return date('Y/m/d H:i:s T', $timestamp);
+}
+
 /*
-core_format_date()
-core_format_datetime()
 core_format_address() // MAYBE
 */
 
