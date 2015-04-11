@@ -9,10 +9,6 @@ function core_router_init() {
         } else {
             $routes = array();
         }
-        $request['route'] = array(
-            'file' => '404.php',
-            'cached' => 0,
-        );
         // 10 seconds by default.
         $expiry = 10;
         foreach ($routes as $pattern => $handler) {
@@ -35,14 +31,12 @@ function core_router_init() {
         core_log('router', 'request: "' . $request['path'] . '" handler: "' . $request['route']['handler'] . '" cached: "' . ($request['route']['cached'] > 0 ? core_format_duration($request['route']['cached']) : 'n/a') . '"');
     }
     if (!isset($request['route']['handler'])) {
-        $request['route']['handler'] = '404.php';
+        core_not_found();
     }
     $handler = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'handlers' . DIRECTORY_SEPARATOR . $request['route']['handler'];
     if (!file_exists($handler)) {
-// TODO - throw 4xx or 5xx?
         core_log('router', 'handler file does not exist: ' . $handler, 'fatal');
-        header('HTTP/1.0 404 Not Found');
-        exit;
+        core_not_found();
     }
     require $handler;
     unset($_SESSION['state']);
