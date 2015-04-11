@@ -1,4 +1,18 @@
 <?php
+function core_access_denied() {
+// @TODO - flush this out more with a universal access denied thing that works with the theme
+    echo "access denied, better page coming soon";
+    header('HTTP/1.0 403 Access Denied');
+    exit;
+}
+
+function core_not_found() {
+// @TODO - flush this out more with a universal not found thing that works with the theme
+    echo "not found, better page coming soon";
+    header('HTTP/1.0 404 Not Found');
+    exit;
+}
+
 function core_backtrace($quick = FALSE) {
     $backtrace = debug_backtrace();
     array_shift($backtrace);
@@ -211,7 +225,7 @@ function core_error_normalize($level = '') {
 function core_error_handler($level = 0, $message = '', $file = '', $line = 0, $context = array()) {
     $backtrace = debug_backtrace();
     $details['timestamp'] = core_timestamp();
-    if ($backtrace[0]['args'][4]['error']) {
+    if (isset($backtrace[0]['args'][4]['error'])) {
         $details = array(
             'module' => 'php',
             'message' => $backtrace[0]['args'][4]['error']['message'],
