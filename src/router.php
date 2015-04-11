@@ -18,9 +18,10 @@ function core_router_init() {
         foreach ($routes as $pattern => $handler) {
 // @TODO - $handler becomes 'function' and 'file'
             if (preg_match('|' . str_replace('|', '\\|', $pattern) . '|', $request['path'], $arguments)) {
-               $request['arguments'] = $arguments;
+               unset($arguments[0]);
                $request['route'] = array(
                     'handler' => $handler,
+                    'arguments' => $arguments,
                     'cached' => core_timestamp(),
                 );
                 // 1 hour cache for a hit.
@@ -89,8 +90,8 @@ function core_router_argument($position = 0, $fallback = '') {
         return $return;
     }
     global $request;
-    if (isset($request['arguments'][$position])) {
-        $return = $request['arguments'][$position];
+    if (isset($request['route']['arguments'][$position])) {
+        $return = $request['route']['arguments'][$position];
     } else {
         $return = $fallback;
     }

@@ -11,6 +11,7 @@ function core_request_init() {
         parse_str($request['query'], $request['params']);
     }
     $request['parts'] = explode('/', $request['path']);
+    unset($request['parts'][0]);
     $request['base'] = core_config_get('base_path', '');
 
     // trim off trailing slash if necessary.
