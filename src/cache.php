@@ -1,6 +1,7 @@
 <?php
 function core_cache_init() {
-    $cache = core_config_get('cache', '');
+// @TODO - could be cache.type?
+    $cache = core_registry_get('config.cache', '');
     if (empty($cache)) {
         core_log('cache', 'cache module not defined', 'error');
         return FALSE;

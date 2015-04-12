@@ -1,11 +1,10 @@
 <?php
 function core_router_init() {
-    global $request;
-    if ($cached = core_cache_get('router', $request['path'])) {
-        $request['route'] = $cached;
+    if ($cached = core_cache_get('router', core_registry_get('request.path'))) {
+        core_registry_set('request.route', $cached);
     } else {
         if (core_router_regenerate()) {
-            require core_config_get('project_root') . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'routes.cached.php';
+            require core_registry_get('config.project_root') . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'routes.cached.php';
         } else {
             $routes = array();
         }
@@ -13,45 +12,47 @@ function core_router_init() {
         $expiry = 10;
         foreach ($routes as $pattern => $handler) {
 // @TODO - $handler becomes 'function' and 'file'
-            if (preg_match('|' . str_replace('|', '\\|', $pattern) . '|', $request['path'], $arguments)) {
-               unset($arguments[0]);
-               $request['route'] = array(
+            if (preg_match('|' . str_replace('|', '\\|', $pattern) . '|', core_registry_get('request.path'), $arguments)) {
+                unset($arguments[0]);
+                core_registry_set('request.route', array(
                     'handler' => $handler,
                     'arguments' => $arguments,
-                    'cached' => core_timestamp(),
-                );
+                    'cached' => core_registry_get('core.now'),
+                ));
                 // 1 hour cache for a hit.
                 $expiry = 3600;
-                core_cache_set('router', $request['path'], $request['route'], $expiry);
+                core_cache_set('router', core_registry_get('request.path'), core_registry_get('request.route'), $expiry);
                 break;
             }
         }
     }
-    if (core_config_get('superdebug', FALSE)) {
-        core_log('router', 'request: "' . $request['path'] . '" handler: "' . $request['route']['handler'] . '" cached: "' . ($request['route']['cached'] > 0 ? core_format_duration($request['route']['cached']) : 'n/a') . '"');
+    $handler = core_registry_get('request.route')['handler'];
+    if (core_registry_get('config.superdebug', FALSE)) {
+        core_log('router', 'request: "' . core_registry_get('request.path') . '" handler: "' . $handler . '" cached: "' . (core_registry_get('request.route.cached') > 0 ? core_format_duration(core_registry_get('request.route.cached')) : 'n/a') . '"');
     }
-    if (!isset($request['route']['handler'])) {
+    if (empty($handler)) {
 // @TODO - cache not founds for a short period?
         core_not_found();
     }
-    $handler = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'handlers' . DIRECTORY_SEPARATOR . $request['route']['handler'];
+    $handler = core_registry_get('config.project_root') . DIRECTORY_SEPARATOR . 'handlers' . DIRECTORY_SEPARATOR . $handler;
     if (!file_exists($handler)) {
         core_log('router', 'handler file does not exist: ' . $handler, 'fatal');
 // @TODO - cache not founds for a short period?
         core_not_found();
     }
     require $handler;
+// would SESSION be part of registry...?
     unset($_SESSION['state']);
 }
 
 function core_router_regenerate($force = FALSE) {
-    $route_file = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'routes.php';
+    $route_file = core_registry_get('config.project_root') . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'routes.php';
     if (!file_exists($route_file)) {
 // TODO - throw 4xx or 5xx?
         core_log('router', 'route definition file does not exist: ' . $route_file, 'fatal');
         return FALSE;
     }
-    $cache_file = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'routes.cached.php';
+    $cache_file = core_registry_get('config.project_root') . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'routes.cached.php';
     if (!is_dir(dirname($cache_file))) {
         if (!mkdir(dirname($cache_file), 0711, TRUE)) {
             core_log('router', 'failed to create route cache directory: ' . dirname($cache_file), 'error');
@@ -79,17 +80,4 @@ function core_router_regenerate($force = FALSE) {
         core_cache_flush('router');
     }
     return TRUE;
-}
-
-function core_router_argument($position = 0, $fallback = '') {
-    if ($return = &core_static(__FUNCTION__ . ':' . $position) && $return !== NULL) {
-        return $return;
-    }
-    global $request;
-    if (isset($request['route']['arguments'][$position])) {
-        $return = $request['route']['arguments'][$position];
-    } else {
-        $return = $fallback;
-    }
-    return $return;
 }

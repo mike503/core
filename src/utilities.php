@@ -45,7 +45,7 @@ function core_backtrace($quick = FALSE) {
             $args = implode(', ', $args);
         }
         if ($item['function'] != 'core_shutdown_function' && $item['function'] != 'trigger_error') {
-            $return[] = str_replace(core_config_get('project_root') . DIRECTORY_SEPARATOR, '', $item['file']) . ':' . $item['line'] . ' ' . $item['function'] . '(' . (!empty($args) ? $args : '') . ')';;
+            $return[] = str_replace(core_registry_get('config.project_root') . DIRECTORY_SEPARATOR, '', $item['file']) . ':' . $item['line'] . ' ' . $item['function'] . '(' . (!empty($args) ? $args : '') . ')';;
         }
     }
     return $return;
@@ -54,13 +54,13 @@ function core_backtrace($quick = FALSE) {
 // this function captures both PHP-generated errors and notices, as well as our own core_log() messages.
 function core_log_commit($details = array()) {
 
-    if (!$logging = core_config_get('log', FALSE)) {
+    if (!$logging = core_registry_get('config.log', FALSE)) {
         return FALSE;
     }
 
     $details['level'] = core_error_normalize($details['level']);
-    $details['url'] = core_request_get('url');
-    $details['id'] = core_request_get('id');
+    $details['url'] = core_registry_get('request.url');
+    $details['id'] = core_registry_get('request.id');
     $details['user_id'] = isset($GLOBALS['user']['user_id']) ? $GLOBALS['user']['user_id'] : 0;
     $details['ip'] = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
     $details['referrer'] = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] :'';
@@ -121,7 +121,7 @@ function core_log_commit($details = array()) {
     }
 
     if (in_array('file', $logging)) {
-        $dir = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'var';
+        $dir = core_registry_get('config.project_root') . DIRECTORY_SEPARATOR . 'var';
         if (!is_dir($dir)) {
 // @TODO - figure out a cleaner way without having to "@"
             @mkdir($dir, 0711, TRUE);
@@ -269,7 +269,7 @@ function core_log($module = '', $message = '', $level = 'debug') {
 }
 
 function core_debug($module = '', $message = '') {
-    if (core_config_get('superdebug', FALSE) == TRUE) {
+    if (core_registry_get('config.superdebug', FALSE) == TRUE) {
         core_log($module, $message, 'debug');
     }
 }
@@ -291,7 +291,7 @@ function core_email($type = '', $headers = array(), $tokens = array()) {
     $mail_id = date('Ymd') . substr(md5($headers['to'] . $GLOBALS['config']['salt']) . md5(time() . $GLOBALS['config']['salt']), 0, 40);
 
     $additional_headers = '';
-    if ($from = core_config_get('site_email')) {
+    if ($from = core_registry_get('config.site_email')) {
         $additional_headers .= 'From: ' . $from . "\r\n";
     }
     $additional_headers .= 'X-Mail-ID: ' . $mail_id . "\r\n";
@@ -302,7 +302,7 @@ function core_email($type = '', $headers = array(), $tokens = array()) {
         $additional_headers .= 'Bcc: ' . $headers['bcc'] . "\r\n";
     }
 
-    $template = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'themes' . DIRECTORY_SEPARATOR . core_config_get('site_theme') . DIRECTORY_SEPARATOR . 'email' . DIRECTORY_SEPARATOR . $type . '.xml';
+    $template = core_registry_get('config.project_root') . DIRECTORY_SEPARATOR . 'themes' . DIRECTORY_SEPARATOR . core_registry_get('config.site_theme') . DIRECTORY_SEPARATOR . 'email' . DIRECTORY_SEPARATOR . $type . '.xml';
     if (!file_exists($template)) {
         core_log('mail', 'email template missing: ' . $template, 'error');
         return FALSE;
@@ -324,12 +324,12 @@ function core_email($type = '', $headers = array(), $tokens = array()) {
     $log = array(
         'id' => $mail_id,
 // @TODO - make a "strip project root off path" function?
-        'template' => str_replace(core_config_get('project_root') . DIRECTORY_SEPARATOR, '', $template),
+        'template' => str_replace(core_registry_get('config.project_root') . DIRECTORY_SEPARATOR, '', $template),
         'headers' => $headers,
         'tokens' => $tokens,
     );
     core_log('mail', print_r($log, TRUE), 'info');
-    if (!mail($headers['to'], $subject, $body, $additional_headers, '-f' . core_config_get('site_email'))) {
+    if (!mail($headers['to'], $subject, $body, $additional_headers, '-f' . core_registry_get('config.site_email'))) {
         core_log('mail', 'mail-id: ' . $mail_id . ' failed to send', 'error');
         return FALSE;
     }
@@ -369,7 +369,7 @@ function core_destination($url = '') {
     if (!empty($url)) {
         return $url;
     }
-    if ($url = core_request_params('destination')) {
+    if ($url = core_registry_get('request.query.destination')) {
         return $url;
     }
     if (isset($_SESSION['destination'])) {
@@ -377,7 +377,7 @@ function core_destination($url = '') {
         unset($_SESSION['destination']);
         return $_SESSION['destination'];
     }
-    return core_request_get('base', '/');
+    return core_registry_get('request.base', '/');
 }
 
 // should go in theme layer, probably
@@ -406,13 +406,19 @@ function core_cookie_delete($name = '') {
     unset($_COOKIE[$name]);
 }
 
-function core_config_get($name = '', $fallback = '') {
+function core_registry_set($key = '', $value = '') {
+    global $_core;
+// @TODO - figure out non-scalars here.
+    $_core[$key] = $value;
+}
+
+function core_registry_get($name = '', $fallback = '') {
     if ($return = &core_static(__FUNCTION__ . ':' . $name) && $return !== NULL) {
         return $return;
     }
-    global $config;
-    if (isset($config[$name])) {
-        $return = $config[$name];
+    global $_core;
+    if (isset($_core[$name])) {
+        $return = $_core[$name];
     } else {
         $return = $fallback;
     }
@@ -420,14 +426,19 @@ function core_config_get($name = '', $fallback = '') {
 }
 
 function core_bootstrap() {
-    global $config;
 
-    $config['project_root'] = dirname(dirname(dirname(dirname(__DIR__))));
-    $config['document_root'] = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'public';
+// @TODO - core.now? core.timestamp?
+    core_registry_set('core.now', isset($_SERVER['REQUEST_TIME']) ? intval($_SERVER['REQUEST_TIME']) : date());
+
+    core_registry_set('config.project_root', dirname(dirname(dirname(dirname(__DIR__)))));
+    core_registry_set('config.document_root', core_registry_get('config.project_root') . DIRECTORY_SEPARATOR . 'public');
 // @TODO this runs into issues on our test environment
-    require core_config_get('project_root') . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php';
+    require core_registry_get('config.project_root') . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php';
 
-    $config['timestamp'] = time();
+// is this good?
+    foreach ($config as $key => $value) {
+        core_registry_set('config.' . $key, $value);
+    }
 
     set_error_handler('core_error_handler');
     register_shutdown_function('core_shutdown_function');
@@ -442,11 +453,11 @@ function core_bootstrap() {
     }
 
 // @TODO MODULE CONCEPT. TBD. SHOULD BE MORE THAN JUST $modules ARRAY
-    $file = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'modules.php';
+    $file = core_registry_get('config.project_root') . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'modules.php';
     if (file_exists($file)) {
         require $file;
         foreach ($modules as $module) {
-            $file = core_config_get('project_root') . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . $module . '.php';
+            $file = core_registry_get('config.project_root') . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . $module . '.php';
             if (file_exists($file)) {
                 require $file;
             }
@@ -462,6 +473,12 @@ function core_bootstrap() {
 }
 
 function core_shutdown_function() {
+    if (core_registry_get('config.superdebug', FALSE) == TRUE) {
+        global $_core;
+        echo '<!--' . PHP_EOL;
+        print_r($_core);
+        echo '-->' . PHP_EOL;
+    }
     // allows us to capture fatal errors. as long as they're defined in the shutdown function before it happens.
     if ($error = error_get_last()) {
         if ($error['type'] === E_ERROR || $error['type'] === E_USER_ERROR || $error['type'] == E_PARSE) {

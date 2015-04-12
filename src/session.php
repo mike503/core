@@ -14,7 +14,6 @@ function core_session_gc($maxlifetime = 0) {
 }
 
 function core_session_init() {
-    global $config;
 /*
 ; OWASP suggestions
 ;session.cache_expire = 30
@@ -28,8 +27,8 @@ function core_session_init() {
     ini_set('session.gc_probability', 0);
 // redundant to below?
     ini_set('session.save_handler', 'user');
-    ini_set('session.cookie_domain', isset($config['cookie_domain']) ? $config['cookie_domain'] : $_SERVER['HTTP_HOST']);
-    session_name($config['session_name']);
+    ini_set('session.cookie_domain', core_registry_get('config.cookie_domain', $_SERVER['HTTP_HOST']));
+    session_name(core_registry_get('config.session_name', 'PHPSESSID'));
     session_set_save_handler('core_session_open', 'core_session_close', 'core_session_read', 'core_session_write', 'core_session_die', 'core_session_gc');
     session_start();
     register_shutdown_function('session_write_close');
