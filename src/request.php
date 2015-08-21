@@ -19,8 +19,7 @@ function core_request_init() {
     }
 
     // path parts.
-    $parts = explode('/', substr($request['path'], strlen(core_registry_get('config.base_path', '/'))));
-    unset($parts[0]);
+    $parts = array_slice(explode('/', substr($request['path'], strlen(core_registry_get('config.base_path', '/')))), 1);
     core_registry_set('request.path.parts', $parts);
 
     // this is a "fact" for this request.

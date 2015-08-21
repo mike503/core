@@ -3,6 +3,17 @@ STRUCTURE IDEAS:
 module, plugin
 theme, templates
 
+providers
+- cache - only one
+- database - multiple
+- filesystem - multiple
+- email
+- notifications (email is part of that...?)
+- http transport - curl, socket, guzzle - multiple
+- session - file, db, cache? - only one
+
+
+
 ~~~
 
 external modules:

@@ -94,7 +94,7 @@ function core_db_paginate($query = '', $current_page = 1, $items_per_page = 15) 
 function core_db_query($query = '') {
     if (core_db_check() && !empty($query)) {
         if (!$results = mysqli_query($GLOBALS['dbh'], $query)) {
-            core_log('database', mysqli_error($GLOBALS['dbh']) . '" query: "' . $query . '"', 'error');
+            core_log('database', 'message: ' . mysqli_error($GLOBALS['dbh']) . ' / query: "' . $query . '"', 'error');
             return FALSE;
         }
         return $results;

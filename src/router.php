@@ -13,7 +13,8 @@ function core_router_init() {
         foreach ($routes as $pattern => $handler) {
 // @TODO - $handler becomes 'function' and 'file'
             if (preg_match('|' . str_replace('|', '\\|', $pattern) . '|', core_registry_get('request.path'), $arguments)) {
-                unset($arguments[0]);
+// i think this works
+                $arguments = array_slice($arguments, 1);
                 core_registry_set('request.route', array(
                     'handler' => $handler,
                     'arguments' => $arguments,
@@ -26,9 +27,12 @@ function core_router_init() {
             }
         }
     }
-    $handler = core_registry_get('request.route')['handler'];
-    if (core_registry_get('config.superdebug', FALSE)) {
-        core_log('router', 'request: "' . core_registry_get('request.path') . '" handler: "' . $handler . '" cached: "' . (core_registry_get('request.route.cached') > 0 ? core_format_duration(core_registry_get('request.route.cached')) : 'n/a') . '"');
+    $route = core_registry_get('request.route');
+    if (isset($route['handler'])) {
+        $handler = $route['handler'];
+        if (core_registry_get('config.superdebug', FALSE)) {
+            core_log('router', 'request: "' . core_registry_get('request.path') . '" handler: "' . $handler . '" cached: "' . (core_registry_get('request.route.cached') > 0 ? core_format_duration(core_registry_get('request.route.cached')) : 'n/a') . '"');
+        }
     }
     if (empty($handler)) {
 // @TODO - cache not founds for a short period?

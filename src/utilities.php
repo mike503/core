@@ -25,7 +25,7 @@ function core_backtrace($quick = FALSE) {
     }
     $return = array();
     foreach ($backtrace as $item) {
-        if (in_array($item['function'], array('core_error_handler', 'core_log_commit', 'core_backtrace'))) {
+        if (in_array($item['function'], array('core_error_handler', 'core_log_commit', 'core_backtrace', 'core_log'))) {
             continue;
         }
         if (isset($item['args'])) {
@@ -45,8 +45,9 @@ function core_backtrace($quick = FALSE) {
             $args = implode(', ', $args);
         }
         if ($item['function'] != 'core_shutdown_function' && $item['function'] != 'trigger_error') {
-            $return[] = str_replace(core_registry_get('config.project_root') . DIRECTORY_SEPARATOR, '', $item['file']) . ':' . $item['line'] . ' ' . $item['function'] . '(' . (!empty($args) ? $args : '') . ')';;
+            $return[] = str_replace(core_registry_get('config.project_root') . DIRECTORY_SEPARATOR, '', isset($item['file']) ? $item['file'] : '[INTERNAL]') . (isset($item['line']) ? ':' . $item['line'] : '') . ' ' . $item['function'] . '(' . (!empty($args) ? $args : '') . ')';;
         }
+        $return = array_reverse($return);
     }
     return $return;
 }
@@ -110,6 +111,10 @@ function core_log_commit($details = array()) {
     }
 
     if ($details['level'] != 'debug') {
+        // these don't make sense
+        unset($details['file']);
+        unset($details['line']);
+        unset($details['function']);
         if ($backtrace = core_backtrace()) {
             $details['message'] .= PHP_EOL . PHP_EOL . 'Stack trace:' . PHP_EOL;
             $i = 1;
@@ -307,6 +312,7 @@ function core_email($type = '', $headers = array(), $tokens = array()) {
         core_log('mail', 'email template missing: ' . $template, 'error');
         return FALSE;
     }
+// @TODO - json encoding
     if (!$xml = simplexml_load_file($template)) {
         core_log('mail', 'email template failed parsing: ' . $template, 'error');
         return FALSE;
